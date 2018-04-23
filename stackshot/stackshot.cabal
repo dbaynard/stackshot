@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 29a7a4a935218de3bd22a635cfa5c332139a10efcb1bf4232400bd528fe0b90d
+-- hash: d43de2f5d725689cebc0da8f7dbc10d0fc2cb37c164648a813f8f57055bcb434
 
 name:           stackshot
 version:        0.1.0.0
@@ -51,9 +51,11 @@ library
     , filepath
     , hackage-db
     , lens
+    , mtl
     , parsers
     , text
     , typed-process
+    , unliftio
     , yaml
   if flag(dev)
     ghc-options: -O0

@@ -1,6 +1,10 @@
 {-# LANGUAGE
     PackageImports
   , ApplicativeDo
+  , DeriveAnyClass
+  , DeriveDataTypeable
+  , DerivingStrategies
+  , FlexibleContexts
   , NoMonomorphismRestriction
   , OverloadedLists
   , OverloadedStrings
@@ -13,22 +17,51 @@ module Stackshot.Parser
 
 import           "base"       Control.Applicative
 import           "lens"       Control.Lens hiding (noneOf)
+import           "mtl"        Control.Monad.Except
 import qualified "attoparsec" Data.Attoparsec.ByteString.Char8 as A8
+import           "base"       Data.Bifunctor
 import           "bytestring" Data.ByteString (ByteString)
+import qualified "bytestring" Data.ByteString as BS
+import           "base"       Data.Data
 import           "base"       Data.Foldable
 import qualified "containers" Data.Map.Strict as MapS
 import           "base"       Data.String
+import           "text"       Data.Text (Text)
+import qualified "text"       Data.Text as T
 import           "Cabal"      Distribution.Package (PackageName)
 import           "Cabal"      Distribution.Version (Version, mkVersion)
 import           "parsers"    Text.Parser.Char
 import           "parsers"    Text.Parser.Combinators
 import           "parsers"    Text.Parser.Token
+import           "unliftio"   UnliftIO (MonadUnliftIO)
+import           "unliftio"   UnliftIO.Exception
 
 type StackMap = MapS.Map PackageName Version
 
 --------------------------------------------------
+-- * Error handling
+--------------------------------------------------
+
+data Error
+  = ReadError
+  | ParserError Text
+  deriving stock (Show, Eq, Typeable)
+  deriving anyclass (Exception)
+
+readError :: MonadUnliftIO m => m a -> m a
+readError = handleIO . const . throwIO $ ReadError
+
+parserError :: Bifunctor p => p String a -> p Error a
+parserError = first (ParserError . T.pack)
+
+--------------------------------------------------
 -- * Parsing
 --------------------------------------------------
+
+parseSCCFile :: MonadUnliftIO m => FilePath -> m (Either Error StackMap)
+parseSCCFile
+    = pure . parserError . parseSCC
+  <=< readError . liftIO . BS.readFile
 
 parseSCC :: ByteString -> Either String StackMap
 parseSCC = A8.parseOnly stackageCabalConfig
