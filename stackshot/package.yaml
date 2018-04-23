@@ -61,6 +61,5 @@ executables:
       - -rtsopts
       - -with-rtsopts=-N
     source-dirs:
-    - src
     - app
     main: Main.hs
