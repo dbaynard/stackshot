@@ -49,6 +49,7 @@ library:
   - aeson
   - attoparsec
   - bytestring
+  - containers
   - directory
   - filepath
   - hackage-db

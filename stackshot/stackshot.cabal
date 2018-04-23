@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e54add59807240952725ca31b3a6bc1b4e45f8989888d9dff052ea3b57482432
+-- hash: 29a7a4a935218de3bd22a635cfa5c332139a10efcb1bf4232400bd528fe0b90d
 
 name:           stackshot
 version:        0.1.0.0
@@ -35,6 +35,7 @@ library
   exposed-modules:
       Stackshot
   other-modules:
+      Stackshot.Parser
       Paths_stackshot
   hs-source-dirs:
       src
@@ -45,6 +46,7 @@ library
     , attoparsec
     , base >=4.7 && <5
     , bytestring
+    , containers
     , directory
     , filepath
     , hackage-db
