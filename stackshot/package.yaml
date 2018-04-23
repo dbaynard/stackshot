@@ -1,0 +1,57 @@
+name: stackshot
+version: 0.1.0.0
+synopsis: Compare stack snapshot with current hackage
+description: See README.md
+github: dbaynard/stackshot
+license: BSD3
+author: David Baynard
+maintainer: davidbaynard@gmail.com
+copyright: 2018 David Baynard
+category: Development
+extra-source-files:
+- ../README.md
+- ../LICENSE
+
+flags:
+  dev:
+    description: Compile for development
+    default: true
+    manual: false
+
+when:
+- condition: flag(dev)
+  then:
+    ghc-options: -O0
+  else:
+    ghc-options:
+    - -O2
+    - -split-sections
+
+ghc-options:
+- -Wall
+- -Wincomplete-uni-patterns
+- -Wincomplete-record-updates
+#- -Wmissing-import-lists
+- -Wcompat
+- -Wnoncanonical-monad-instances
+- -Wnoncanonical-monadfail-instances
+- -ddump-minimal-imports
+
+dependencies:
+  - base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+  exposed-modules:
+  - Stackshot
+
+executables:
+  stackshot:
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    source-dirs:
+    - src
+    - app
+    main: Main.hs

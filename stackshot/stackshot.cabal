@@ -1,0 +1,65 @@
+-- This file has been generated from package.yaml by hpack version 0.27.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: e7b3b4fbead96c166bc1b129638616cd8d1b7879557f765cb0ee7ff71619674b
+
+name:           stackshot
+version:        0.1.0.0
+synopsis:       Compare stack snapshot with current hackage
+description:    See README.md
+category:       Development
+homepage:       https://github.com/dbaynard/stackshot#readme
+bug-reports:    https://github.com/dbaynard/stackshot/issues
+author:         David Baynard
+maintainer:     davidbaynard@gmail.com
+copyright:      2018 David Baynard
+license:        BSD3
+build-type:     Simple
+cabal-version:  >= 1.10
+
+extra-source-files:
+    ../LICENSE
+    ../README.md
+
+source-repository head
+  type: git
+  location: https://github.com/dbaynard/stackshot
+
+flag dev
+  description: Compile for development
+  manual: False
+  default: True
+
+library
+  exposed-modules:
+      Stackshot
+  other-modules:
+      Paths_stackshot
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Wnoncanonical-monad-instances -Wnoncanonical-monadfail-instances -ddump-minimal-imports
+  build-depends:
+      base >=4.7 && <5
+  if flag(dev)
+    ghc-options: -O0
+  else
+    ghc-options: -O2 -split-sections
+  default-language: Haskell2010
+
+executable stackshot
+  main-is: Main.hs
+  other-modules:
+      Stackshot
+      Paths_stackshot
+  hs-source-dirs:
+      src
+      app
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Wnoncanonical-monad-instances -Wnoncanonical-monadfail-instances -ddump-minimal-imports -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+  if flag(dev)
+    ghc-options: -O0
+  else
+    ghc-options: -O2 -split-sections
+  default-language: Haskell2010
