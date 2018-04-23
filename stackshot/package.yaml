@@ -49,9 +49,13 @@ library:
   - aeson
   - attoparsec
   - bytestring
+  - directory
+  - filepath
   - hackage-db
+  - lens
   - parsers
   - text
+  - typed-process
   - yaml
 
 executables:
