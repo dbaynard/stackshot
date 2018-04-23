@@ -44,6 +44,15 @@ library:
   source-dirs: src
   exposed-modules:
   - Stackshot
+  dependencies:
+  - Cabal
+  - aeson
+  - attoparsec
+  - bytestring
+  - hackage-db
+  - parsers
+  - text
+  - yaml
 
 executables:
   stackshot:

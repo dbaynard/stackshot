@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e7b3b4fbead96c166bc1b129638616cd8d1b7879557f765cb0ee7ff71619674b
+-- hash: 6a720eac88896834730ea749a53a1e28ff296dee727b5943c599b3994581b8f2
 
 name:           stackshot
 version:        0.1.0.0
@@ -40,7 +40,15 @@ library
       src
   ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Wnoncanonical-monad-instances -Wnoncanonical-monadfail-instances -ddump-minimal-imports
   build-depends:
-      base >=4.7 && <5
+      Cabal
+    , aeson
+    , attoparsec
+    , base >=4.7 && <5
+    , bytestring
+    , hackage-db
+    , parsers
+    , text
+    , yaml
   if flag(dev)
     ghc-options: -O0
   else
