@@ -8,7 +8,9 @@
   , NoMonomorphismRestriction
   , OverloadedLists
   , OverloadedStrings
+  , RankNTypes
   , TypeApplications
+  , TypeOperators
   #-}
 
 module Stackshot.Parser
@@ -94,7 +96,14 @@ pkgVer = do
   pure ver
 
 buildMap :: (Foldable t, At b, Monoid b) => t (Index b, IxValue b) -> b
-buildMap = foldl' (\m (n, v) -> m & at n ?~ v) mempty
+buildMap = buildMap' (?~)
 
 buildMapMaybe :: (Foldable t, At b, Monoid b) => t (Index b, Maybe (IxValue b)) -> b
-buildMapMaybe = foldl' (\m (n, v) -> m & at n .~ v) mempty
+buildMapMaybe = buildMap' (.~)
+
+buildMap'
+  :: (Foldable t, At b, Monoid b)
+  => (b `Lens'` Maybe (IxValue b) -> a -> b -> b)
+  -> t (Index b, a) -> b
+buildMap' f = foldl' (\m (k, v) -> m & at k `f` v) mempty
+{-# INLINE buildMap' #-}
