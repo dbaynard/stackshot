@@ -40,6 +40,7 @@ library
       Stackshot.Snapshot
       Stackshot.Stackage
   other-modules:
+      Stackshot.Snapshot.Auto
       Paths_stackshot
   hs-source-dirs:
       src
