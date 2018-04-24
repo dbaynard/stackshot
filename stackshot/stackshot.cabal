@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0c2479c32fe936788500893512edd22ce39c2fba78b246ab616e74ad2d038a02
+-- hash: ed3373aaa81ae3754e2e06b84154faebe1e0646a7a69445d2aa8afe060d99413
 
 name:           stackshot
 version:        0.1.0.0
@@ -37,6 +37,7 @@ library
       Stackshot.Internal
       Stackshot.Parser
       Stackshot.QQ
+      Stackshot.Snapshot
       Stackshot.Stackage
   other-modules:
       Paths_stackshot

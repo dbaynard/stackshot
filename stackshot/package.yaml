@@ -47,6 +47,7 @@ library:
   - Stackshot.Internal
   - Stackshot.Parser
   - Stackshot.QQ
+  - Stackshot.Snapshot
   - Stackshot.Stackage
   dependencies:
   - Cabal
