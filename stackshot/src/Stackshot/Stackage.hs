@@ -22,6 +22,7 @@ import           "base"           Control.Applicative
 import qualified "attoparsec"     Data.Attoparsec.Text as AT
 import           "base"           Data.Bifunctor
 import           "base"           Data.Proxy
+import           "base"           Data.String
 import qualified "text"           Data.Text as T
 import           "time"           Data.Time
 import           "base"           GHC.Generics
@@ -37,13 +38,18 @@ type Stackage
     = Capture "snapshot" Snapshot :> "cabal.config" :> Get '[PlainText] StackMap
 
 data Snapshot
-  = LTS Int Int
-  | Nightly Day
+  = LTS (Maybe (Int, Int))
+  | Nightly (Maybe Day)
   deriving stock (Show, Eq, Ord, Generic)
 
+instance IsString Snapshot where
+  fromString = either error id . AT.parseOnly parseSnapshot . T.pack
+
 instance ToHttpApiData Snapshot where
-  toQueryParam (LTS mj mn) = mconcat ["lts-", toQueryParam mj, ".", toQueryParam mn]
-  toQueryParam (Nightly dy) = mconcat ["nightly-", toQueryParam dy]
+  toQueryParam (LTS Nothing        ) = "lts"
+  toQueryParam (LTS (Just (mj, mn))) = mconcat ["lts-", toQueryParam mj, ".", toQueryParam mn]
+  toQueryParam (Nightly Nothing)     = "nightly"
+  toQueryParam (Nightly (Just dy))   = mconcat ["nightly-", toQueryParam dy]
 instance FromHttpApiData Snapshot where
   parseQueryParam = first T.pack . AT.parseOnly parseSnapshot
 
@@ -51,15 +57,21 @@ parseSnapshot :: forall m . TokenParsing m => m Snapshot
 parseSnapshot = lts <|> nightly
   where
     lts = do
-      _ <- string "lts-"
-      mj <- fromIntegral <$> natural
-      _ <- char '.'
-      mn <- fromIntegral <$> natural
-      pure $ LTS mj mn
+      _ <- string "lts"
+      ver <- optional $ do
+        _ <- char '-'
+        mj <- fromIntegral <$> natural
+        _ <- char '.'
+        mn <- fromIntegral <$> natural
+        pure (mj, mn)
+      pure $ LTS ver
 
     nightly = do
-      _ <- string "nightly-"
-      Right dy <- parseQueryParam @Day . T.pack <$> count 10 anyChar
+      _ <- string "nightly"
+      dy <- optional $ do
+        _ <- char '-'
+        Right dy <- parseQueryParam @Day . T.pack <$> count 10 anyChar
+        pure dy
       pure $ Nightly dy
 
 getStackageCabalConfig :: Snapshot -> ClientM StackMap
