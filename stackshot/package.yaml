@@ -44,9 +44,10 @@ library:
   source-dirs: src
   exposed-modules:
   - Stackshot
-  - Stackshot.Parser
-  - Stackshot.Stackage
   - Stackshot.Internal
+  - Stackshot.Parser
+  - Stackshot.QQ
+  - Stackshot.Stackage
   dependencies:
   - Cabal
   - aeson
@@ -63,6 +64,7 @@ library:
   - parsers
   - servant
   - servant-client
+  - template-haskell
   - text
   - time
   - typed-process

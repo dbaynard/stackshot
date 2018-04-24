@@ -26,6 +26,7 @@ module Stackshot.Stackage
     -- $api
     Stackage
   , Snapshot(..)
+  , snapshot
 
     -- * Client functions
     -- $client
@@ -34,21 +35,22 @@ module Stackshot.Stackage
   , stackageReq
   ) where
 
-import           "base"            Control.Applicative
-import qualified "attoparsec"      Data.Attoparsec.Text as AT
-import           "base"            Data.Bifunctor
-import           "base"            Data.Proxy
-import           "base"            Data.String
-import qualified "text"            Data.Text as T
-import           "time"            Data.Time
-import           "http-client-tls" Network.HTTP.Client.TLS (newTlsManager)
-import           "servant"         Servant.API
-import           "servant-client"  Servant.Client
-import           "this"            Stackshot.Internal
-import           "this"            Stackshot.Parser
-import           "parsers"         Text.Parser.Char
-import           "parsers"         Text.Parser.Combinators
-import           "parsers"         Text.Parser.Token
+import           "base"             Control.Applicative
+import qualified "attoparsec"       Data.Attoparsec.Text as AT
+import           "base"             Data.Bifunctor
+import           "base"             Data.Proxy
+import qualified "text"             Data.Text as T
+import           "time"             Data.Time
+import           "template-haskell" Language.Haskell.TH.Quote (QuasiQuoter)
+import           "http-client-tls"  Network.HTTP.Client.TLS (newTlsManager)
+import           "servant"          Servant.API
+import           "servant-client"   Servant.Client
+import           "this"             Stackshot.Internal
+import           "this"             Stackshot.Parser ()
+import           "this"             Stackshot.QQ
+import           "parsers"          Text.Parser.Char
+import           "parsers"          Text.Parser.Combinators
+import           "parsers"          Text.Parser.Token
 
 --------------------------------------------------
 -- $api
@@ -60,9 +62,9 @@ import           "parsers"         Text.Parser.Token
 type Stackage
     = Capture "snapshot" Snapshot :> "cabal.config" :> Get '[PlainText] StackMap
 
--- TODO Fix so can't make bad snapshot
-instance IsString Snapshot where
-  fromString = either error id . AT.parseOnly parseSnapshot . T.pack
+-- | Use as e.g. @[snapshot| lts |]@ to produce @'LTS' 'Nothing'@.
+snapshot :: QuasiQuoter
+snapshot = attoparsed parseSnapshot
 
 instance ToHttpApiData Snapshot where
   toQueryParam (LTS Nothing        ) = "lts"
@@ -116,7 +118,7 @@ stackageBaseURL = BaseUrl
 -- | Request the @cabal.config@ file corresponding to the supplied
 -- snapshot.
 stackageReq :: Snapshot -> IO (Either ServantError StackMap)
-stackageReq snapshot = do
+stackageReq sShot = do
   man <- newTlsManager
   let clientEnv = mkClientEnv man stackageBaseURL
-  runClientM (getStackageCabalConfig snapshot) clientEnv
+  runClientM (getStackageCabalConfig sShot) clientEnv

@@ -12,6 +12,7 @@
   , RankNTypes
   , TypeApplications
   , TypeOperators
+  , StandaloneDeriving
   #-}
 
 -- |
@@ -45,20 +46,21 @@ module Stackshot.Internal
   , (<??>)
   ) where
 
-import           "parsers"         Text.Parser.Combinators
-import           "time"            Data.Time
-import           "lens"       Control.Lens hiding (noneOf)
-import           "base"       Data.Bifunctor
-import           "base"       Data.Data
-import           "base"       Data.Foldable
-import qualified "containers" Data.Map.Strict as MapS
-import           "text"       Data.Text (Text)
-import qualified "text"       Data.Text as T
-import           "Cabal"      Distribution.Package (PackageName)
-import           "Cabal"      Distribution.Version (Version)
-import           "base"       GHC.Generics
-import           "unliftio"   UnliftIO (MonadUnliftIO)
-import           "unliftio"   UnliftIO.Exception
+import           "lens"             Control.Lens hiding (noneOf)
+import           "base"             Data.Bifunctor
+import           "base"             Data.Data
+import           "base"             Data.Foldable
+import qualified "containers"       Data.Map.Strict as MapS
+import           "text"             Data.Text (Text)
+import qualified "text"             Data.Text as T
+import           "time"             Data.Time
+import           "Cabal"            Distribution.Package (PackageName)
+import           "Cabal"            Distribution.Version (Version)
+import           "base"             GHC.Generics
+import           "template-haskell" Language.Haskell.TH.Syntax
+import           "parsers"          Text.Parser.Combinators
+import           "unliftio"         UnliftIO (MonadUnliftIO)
+import           "unliftio"         UnliftIO.Exception
 
 --------------------------------------------------
 -- $datatypes
@@ -71,7 +73,8 @@ newtype StackMap = StackMap (MapS.Map PackageName Version)
 data Snapshot
   = LTS (Maybe (Int, Int)) -- ^ LTS snapshots have either a @-/Major/./Minor/@ suffix, or no suffix at all.
   | Nightly (Maybe Day)    -- ^ Nightly snapshots may have a @-/YYYY-MM-DD/@ suffix.
-  deriving stock (Show, Eq, Ord, Generic)
+  deriving stock (Show, Eq, Ord, Generic, Data)
+  deriving anyclass (Lift)
 
 --------------------------------------------------
 -- $errors

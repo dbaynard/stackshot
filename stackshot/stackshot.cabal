@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cbd333d41a14b3e8f5fdc05bb623fa312a31b535f3677af4ac606c124eb588ad
+-- hash: 0c2479c32fe936788500893512edd22ce39c2fba78b246ab616e74ad2d038a02
 
 name:           stackshot
 version:        0.1.0.0
@@ -34,9 +34,10 @@ flag dev
 library
   exposed-modules:
       Stackshot
-      Stackshot.Parser
-      Stackshot.Stackage
       Stackshot.Internal
+      Stackshot.Parser
+      Stackshot.QQ
+      Stackshot.Stackage
   other-modules:
       Paths_stackshot
   hs-source-dirs:
@@ -59,6 +60,7 @@ library
     , parsers
     , servant
     , servant-client
+    , template-haskell
     , text
     , time
     , typed-process
