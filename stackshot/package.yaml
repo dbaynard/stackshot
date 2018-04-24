@@ -60,6 +60,7 @@ library:
   - hackage-db
   - http-api-data
   - http-client-tls
+  - json-autotype
   - lens
   - mtl
   - parsers

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ed3373aaa81ae3754e2e06b84154faebe1e0646a7a69445d2aa8afe060d99413
+-- hash: 814b09fc9250b47c370e7374b6a901f2b4f4b682eca8ebf567ef8adeff007fd3
 
 name:           stackshot
 version:        0.1.0.0
@@ -40,6 +40,7 @@ library
       Stackshot.Snapshot
       Stackshot.Stackage
   other-modules:
+      Stackshot.Snapshot.Auto
       Paths_stackshot
   hs-source-dirs:
       src
@@ -56,6 +57,7 @@ library
     , hackage-db
     , http-api-data
     , http-client-tls
+    , json-autotype
     , lens
     , mtl
     , parsers
