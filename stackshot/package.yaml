@@ -46,6 +46,7 @@ library:
   - Stackshot
   - Stackshot.Parser
   - Stackshot.Stackage
+  - Stackshot.Internal
   dependencies:
   - Cabal
   - aeson
