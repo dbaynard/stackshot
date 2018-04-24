@@ -44,6 +44,7 @@ library:
   source-dirs: src
   exposed-modules:
   - Stackshot
+  - Stackshot.API
   - Stackshot.Parser
   dependencies:
   - Cabal
@@ -54,10 +55,13 @@ library:
   - directory
   - filepath
   - hackage-db
+  - http-api-data
   - lens
   - mtl
   - parsers
+  - servant
   - text
+  - time
   - typed-process
   - unliftio
   - yaml
