@@ -3,8 +3,11 @@
   , ApplicativeDo
   , DeriveAnyClass
   , DeriveDataTypeable
+  , DeriveGeneric
   , DerivingStrategies
   , FlexibleContexts
+  , GeneralizedNewtypeDeriving
+  , MultiParamTypeClasses
   , NoMonomorphismRestriction
   , OverloadedLists
   , OverloadedStrings
@@ -27,7 +30,7 @@ module Stackshot.Parser
   (
   -- * Parsing
   -- $parsing
-    StackMap
+    StackMap(..)
   , parseSCCFile
   , parseSCC
 
@@ -53,6 +56,7 @@ import           "base"       Control.Applicative
 import           "lens"       Control.Lens hiding (noneOf)
 import           "mtl"        Control.Monad.Except
 import qualified "attoparsec" Data.Attoparsec.ByteString.Char8 as A8
+import qualified "attoparsec" Data.Attoparsec.ByteString.Lazy as AL
 import           "base"       Data.Bifunctor
 import           "bytestring" Data.ByteString (ByteString)
 import qualified "bytestring" Data.ByteString as BS
@@ -64,6 +68,8 @@ import           "text"       Data.Text (Text)
 import qualified "text"       Data.Text as T
 import           "Cabal"      Distribution.Package (PackageName)
 import           "Cabal"      Distribution.Version (Version, mkVersion)
+import           "base"       GHC.Generics
+import           "servant"    Servant.API
 import           "parsers"    Text.Parser.Char
 import           "parsers"    Text.Parser.Combinators
 import           "parsers"    Text.Parser.Token
@@ -102,7 +108,11 @@ parserError = first (ParserError . T.pack)
 -- 
 -- Produce a 'StackMap' from the set of packages described by stackage.
 
-type StackMap = MapS.Map PackageName Version
+newtype StackMap = StackMap (MapS.Map PackageName Version)
+  deriving stock (Show, Eq, Generic)
+
+instance MimeUnrender PlainText StackMap where
+  mimeUnrender _ = AL.eitherResult . AL.parse stackageCabalConfig
 
 -- | Parse a stackage cabal.config file.
 --
@@ -122,7 +132,7 @@ stackageCabalConfig = do
   _ <- string "constraints:"
   entries <- buildMapMaybe <$> sccEntry `sepBy1` comma
   _ <- eof
-  pure entries
+  pure $ StackMap entries
 
 sccHeader :: CharParsing m => m String
 sccHeader = fmap unlines . some $ do

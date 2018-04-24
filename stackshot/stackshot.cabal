@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5eaa5359f7c37b6b8c7aac63df2b0999ca99f9c4c1abd5f4d80fc3976c6f6250
+-- hash: cba381bcb6d4addb39b2b6e19471c42b26ca2856931c52859a44ab5ecde50e4c
 
 name:           stackshot
 version:        0.1.0.0
@@ -34,8 +34,8 @@ flag dev
 library
   exposed-modules:
       Stackshot
-      Stackshot.API
       Stackshot.Parser
+      Stackshot.Stackage
   other-modules:
       Paths_stackshot
   hs-source-dirs:
@@ -52,10 +52,12 @@ library
     , filepath
     , hackage-db
     , http-api-data
+    , http-client
     , lens
     , mtl
     , parsers
     , servant
+    , servant-client
     , text
     , time
     , typed-process
