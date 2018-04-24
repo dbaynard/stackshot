@@ -18,21 +18,21 @@ module Stackshot.Stackage
   ( module Stackshot.Stackage
   ) where
 
-import           "base"           Control.Applicative
-import qualified "attoparsec"     Data.Attoparsec.Text as AT
-import           "base"           Data.Bifunctor
-import           "base"           Data.Proxy
-import           "base"           Data.String
-import qualified "text"           Data.Text as T
-import           "time"           Data.Time
-import           "base"           GHC.Generics
-import           "http-client"    Network.HTTP.Client (defaultManagerSettings, newManager)
-import           "servant"        Servant.API
-import           "servant-client" Servant.Client
-import           "this"           Stackshot.Parser
-import           "parsers"        Text.Parser.Char
-import           "parsers"        Text.Parser.Combinators
-import           "parsers"        Text.Parser.Token
+import           "base"            Control.Applicative
+import qualified "attoparsec"      Data.Attoparsec.Text as AT
+import           "base"            Data.Bifunctor
+import           "base"            Data.Proxy
+import           "base"            Data.String
+import qualified "text"            Data.Text as T
+import           "time"            Data.Time
+import           "base"            GHC.Generics
+import           "http-client-tls" Network.HTTP.Client.TLS (newTlsManager)
+import           "servant"         Servant.API
+import           "servant-client"  Servant.Client
+import           "this"            Stackshot.Parser
+import           "parsers"         Text.Parser.Char
+import           "parsers"         Text.Parser.Combinators
+import           "parsers"         Text.Parser.Token
 
 type Stackage
     = Capture "snapshot" Snapshot :> "cabal.config" :> Get '[PlainText] StackMap
@@ -87,6 +87,6 @@ stackageBaseURL = BaseUrl
 
 stackageReq :: Snapshot -> IO (Either ServantError StackMap)
 stackageReq snapshot = do
-  man <- newManager defaultManagerSettings
+  man <- newTlsManager
   let clientEnv = mkClientEnv man stackageBaseURL
   runClientM (getStackageCabalConfig snapshot) clientEnv

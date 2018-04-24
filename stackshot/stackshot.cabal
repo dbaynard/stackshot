@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cba381bcb6d4addb39b2b6e19471c42b26ca2856931c52859a44ab5ecde50e4c
+-- hash: 41107ab9e607a4a05cdada68147e0a01014bcb7094eb977f2a2ae009cf591819
 
 name:           stackshot
 version:        0.1.0.0
@@ -52,7 +52,7 @@ library
     , filepath
     , hackage-db
     , http-api-data
-    , http-client
+    , http-client-tls
     , lens
     , mtl
     , parsers

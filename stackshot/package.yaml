@@ -56,7 +56,7 @@ library:
   - filepath
   - hackage-db
   - http-api-data
-  - http-client
+  - http-client-tls
   - lens
   - mtl
   - parsers
