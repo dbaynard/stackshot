@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d43de2f5d725689cebc0da8f7dbc10d0fc2cb37c164648a813f8f57055bcb434
+-- hash: caef5bac2722b9be72fdcdd430de8fc7ca723e34057ce4bbc0e2f10c18994d2f
 
 name:           stackshot
 version:        0.1.0.0
@@ -34,8 +34,8 @@ flag dev
 library
   exposed-modules:
       Stackshot
-  other-modules:
       Stackshot.Parser
+  other-modules:
       Paths_stackshot
   hs-source-dirs:
       src
