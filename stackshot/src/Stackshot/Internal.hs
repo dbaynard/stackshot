@@ -30,6 +30,7 @@ module Stackshot.Internal
   -- * Data types
   -- $datatypes
     StackMap(..)
+  , Snapshot(..)
 
   -- * Error handling
   -- $errors
@@ -41,8 +42,11 @@ module Stackshot.Internal
   -- $helpers
   , buildMap
   , buildMapMaybe
+  , (<??>)
   ) where
 
+import           "parsers"         Text.Parser.Combinators
+import           "time"            Data.Time
 import           "lens"       Control.Lens hiding (noneOf)
 import           "base"       Data.Bifunctor
 import           "base"       Data.Data
@@ -62,6 +66,12 @@ import           "unliftio"   UnliftIO.Exception
 -- | A map linking each package (key) to an individual version (value).
 newtype StackMap = StackMap (MapS.Map PackageName Version)
   deriving stock (Show, Eq, Generic)
+
+-- | A stackage snapshot.
+data Snapshot
+  = LTS (Maybe (Int, Int)) -- ^ LTS snapshots have either a @-/Major/./Minor/@ suffix, or no suffix at all.
+  | Nightly (Maybe Day)    -- ^ Nightly snapshots may have a @-/YYYY-MM-DD/@ suffix.
+  deriving stock (Show, Eq, Ord, Generic)
 
 --------------------------------------------------
 -- $errors
@@ -115,3 +125,8 @@ buildMap'
   -> t (Index b, a) -> b
 buildMap' f = foldl' (\m (k, v) -> m & at k `f` v) mempty
 {-# INLINE buildMap' #-}
+
+-- | Flipped '<?>'
+(<??>) :: Parsing m => String -> m a -> m a
+(<??>) = flip (<?>)
+infixr 0 <??>

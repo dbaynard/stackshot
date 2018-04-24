@@ -1,11 +1,8 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE
     PackageImports
   , ApplicativeDo
   , DataKinds
-  , DeriveAnyClass
-  , DeriveDataTypeable
-  , DeriveGeneric
-  , DerivingStrategies
   , NoMonomorphismRestriction
   , OverloadedStrings
   , ScopedTypeVariables
@@ -44,10 +41,10 @@ import           "base"            Data.Proxy
 import           "base"            Data.String
 import qualified "text"            Data.Text as T
 import           "time"            Data.Time
-import           "base"            GHC.Generics
 import           "http-client-tls" Network.HTTP.Client.TLS (newTlsManager)
 import           "servant"         Servant.API
 import           "servant-client"  Servant.Client
+import           "this"            Stackshot.Internal
 import           "this"            Stackshot.Parser
 import           "parsers"         Text.Parser.Char
 import           "parsers"         Text.Parser.Combinators
@@ -62,11 +59,6 @@ import           "parsers"         Text.Parser.Token
 
 type Stackage
     = Capture "snapshot" Snapshot :> "cabal.config" :> Get '[PlainText] StackMap
-
-data Snapshot
-  = LTS (Maybe (Int, Int)) -- ^ LTS snapshots have either a @-/Major/./Minor/@ suffix, or no suffix at all.
-  | Nightly (Maybe Day)    -- ^ Nightly snapshots may have a @-/YYYY-MM-DD/@ suffix.
-  deriving stock (Show, Eq, Ord, Generic)
 
 -- TODO Fix so can't make bad snapshot
 instance IsString Snapshot where
@@ -105,10 +97,6 @@ parseNightly = "A valid nightly snapshot" <??> do
     Right dy <- parseQueryParam @Day . T.pack <$> count 10 anyChar <?> "YYYY-MM-DD"
     pure dy
   pure $ Nightly dy
-
-(<??>) :: Parsing m => String -> m a -> m a
-(<??>) = flip (<?>)
-infixr 0 <??>
 
 -- | Client function for the @cabal.config@ endpoints.
 --
