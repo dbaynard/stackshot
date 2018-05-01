@@ -30,6 +30,7 @@ module Stackshot.Parser
   , stackageCabalConfig
   , sccHeader
   , sccEntry
+  , versionedPkg
   , pkgVer
 
   -- * Error handling
@@ -50,6 +51,7 @@ import qualified "attoparsec" Data.Attoparsec.ByteString.Char8 as A8
 import qualified "attoparsec" Data.Attoparsec.ByteString.Lazy as AL
 import           "bytestring" Data.ByteString (ByteString)
 import qualified "bytestring" Data.ByteString as BS
+import qualified "base"       Data.List as List
 import           "base"       Data.String
 import           "Cabal"      Distribution.Package (PackageName)
 import           "Cabal"      Distribution.Version (Version, mkVersion)
@@ -101,6 +103,13 @@ sccEntry = do
   _ <- spaces
   pkgname <- fromString @PackageName <$> notChar ' ' `manyTill` space
   pkgver <- pure <$> pkgVer <|> string "installed" *> pure Nothing
+  pure (pkgname, pkgver)
+
+-- | Parses @package-name-3.4.5@ to (package-name, 3.4.5)
+versionedPkg :: TokenParsing m => m (PackageName, Version)
+versionedPkg = do
+  pkgname <- fromString @PackageName . List.intercalate "-" <$> some alphaNum `endBy1` char '-'
+  pkgver <- mkVersion . fmap fromIntegral <$> natural `sepBy1` char '.'
   pure (pkgname, pkgver)
 
 pkgVer :: TokenParsing m => m Version
