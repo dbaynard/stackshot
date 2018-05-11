@@ -59,6 +59,7 @@ library:
   - containers
   - directory
   - filepath
+  - github
   - hackage-db
   - http-api-data
   - http-client-tls

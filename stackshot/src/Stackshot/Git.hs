@@ -1,20 +1,48 @@
 {-# LANGUAGE
     PackageImports
   , DataKinds
-  , TypeOperators
+  , DeriveGeneric
+  , DerivingStrategies
+  , NamedFieldPuns
+  , OverloadedStrings
+  , RecordWildCards
+  , StrictData
   , TypeInType
+  , TypeOperators
   #-}
 
 module Stackshot.Git
   ( module Stackshot.Git
   ) where
 
-import "servant" Servant.API
-import "text" Data.Text (Text)
+import           "text"   Data.Text (Text)
+import           "base"   GHC.Generics
+import           "github" GitHub.Data
+import qualified "github" GitHub.Endpoints.Repos.Contents as GC
 
-data Contents
+data RepoSource
+  = GitHub
+  deriving stock (Show, Eq, Generic)
 
-type Github
-    = "repos" :> Capture "owner" Text :> Capture "repo" Text :> "contents" :> CaptureAll "path" Text :> QueryParam "ref" Text :> Get '[JSON] Contents
+data RepoPackage = RepoPackage
+  { rSource   :: RepoSource
+  , rOwner    :: Name Owner
+  , rRepo     :: Name Repo
+  , rFilepath :: Text
+  , rCommit   :: Maybe Text
+  }
+  deriving stock (Show, Eq, Generic)
 
--- e.g. https://api.github.com/repos/dbaynard/haskell/contents/snapshot/snapshot.cabal?ref=develop
+-- e.g. https://api.github.com/repos/dbaynard/stackshot/contents/stackshot/stackshot.cabal?ref=develop
+exampleGithubRepo :: RepoPackage
+exampleGithubRepo = RepoPackage
+  { rSource   = GitHub
+  , rOwner    = "dbaynard"
+  , rRepo     = "stackshot"
+  , rFilepath = "stackshot/stackshot.cabal"
+  , rCommit   = Just "develop"
+  }
+
+repoCabal :: RepoPackage -> IO (Either Error Content)
+repoCabal RepoPackage{rSource = GitHub, ..} = do
+  GC.contentsFor rOwner rRepo rFilepath rCommit
