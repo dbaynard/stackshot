@@ -44,6 +44,7 @@ library:
   source-dirs: src
   exposed-modules:
   - Stackshot
+  - Stackshot.Git
   - Stackshot.Internal
   - Stackshot.Parser
   - Stackshot.QQ
