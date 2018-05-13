@@ -55,6 +55,8 @@ library:
   - Cabal
   - aeson
   - attoparsec
+  - base64-bytestring
+  - base64-bytestring-type
   - bytestring
   - containers
   - directory

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f0b2a475bf886c59327af5372f78ba996077dafbea159c5e41152d2cc724e2d2
+-- hash: 51d332060fa384604df8a8b77bef20f7829277bc25d592a8436f1487957816e9
 
 name:           stackshot
 version:        0.1.0.0
@@ -51,6 +51,8 @@ library
     , aeson
     , attoparsec
     , base >=4.7 && <5
+    , base64-bytestring
+    , base64-bytestring-type
     , bytestring
     , containers
     , directory
