@@ -48,13 +48,15 @@ explicit = AT.parseOnly versionedPkg
 parseGitUrl :: Text -> Either Error (Name Owner, Name Repo)
 parseGitUrl = parserError . AT.parseOnly githubUrl
 
-asRepo :: PackagesElt -> [RepoPackage]
+asRepo :: PackagesElt -> [Either Error RepoPackage]
 asRepo PackagesElt{..} = do
-    (rOwner, rRepo) <- either (const []) pure $ parseGitUrl packagesEltGit
+    eep <- either (const [Left (ParserError packagesEltGit)]) (pure . Right) $ parseGitUrl packagesEltGit
     sub <- maybe [Nothing] (fmap Just) packagesEltSubdirs
-    let defRFilepath = T.pack $ T.unpack (untagName rRepo) <.> "cabal"
-        rFilepath = onJust sub defRFilepath $ \s -> T.pack $ T.unpack s </> T.unpack s <.> "cabal"
-    pure RepoPackage{..}
+    pure $ do
+      (rOwner, rRepo) <- eep
+      let defRFilepath = T.pack $ T.unpack (untagName rRepo) <.> "cabal"
+          rFilepath = onJust sub defRFilepath $ \s -> T.pack $ T.unpack s </> T.unpack s <.> "cabal"
+      pure RepoPackage{..}
   where
     rSource      = GitHub
     rCommit      = Just packagesEltCommit

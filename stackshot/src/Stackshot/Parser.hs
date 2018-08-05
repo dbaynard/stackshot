@@ -152,6 +152,7 @@ pkgVer = do
 githubUrl :: CharParsing m => m (Name Owner, Name Repo)
 githubUrl = do
   _ <- string "https://" <|> string "git@"
+  _ <- optional $ string "www."
   _ <- string "github.com"
   _ <- char ':' <|> char '/'
   owner <- fromString @(Name Owner) <$> notChar '/' `manyTill` char '/'
