@@ -26,6 +26,9 @@ module Stackshot.Parser
   , parseSCCFile
   , parseSCC
 
+  -- ** Git urls
+  , githubUrl
+
   -- ** Parser combinators
   , stackageCabalConfig
   , sccHeader
@@ -55,6 +58,7 @@ import qualified "base"       Data.List as List
 import           "base"       Data.String
 import           "Cabal"      Distribution.Package (PackageName)
 import           "Cabal"      Distribution.Version (Version, mkVersion)
+import           "github"     GitHub.Data (Name, Owner, Repo)
 import           "servant"    Servant.API
 import           "this"       Stackshot.Internal
 import           "parsers"    Text.Parser.Char
@@ -117,3 +121,39 @@ pkgVer = do
   _ <- string "=="
   ver <- mkVersion . fmap fromIntegral <$> natural `sepBy1` char '.'
   pure ver
+
+--------------------------------------------------
+-- $git
+--
+-- Parse git repo urls
+
+-- | For example,
+--
+-- @
+-- - git: https://github.com/dbaynard/haskell
+--   commit: ccbf50014bcb8e233b9a99604d7c2e3610611f58
+--   subdirs:
+--   - forestay
+--   - forestay-data
+--   - forestay-serial
+--   - readp
+-- @
+--
+-- @
+-- - git: git@bitbucket.org:dbaynard/ucamwebauth.git
+--   commit: 8b9f8f7a9ed6ad3a81131192c6ae1f51191c99f4
+--   subdirs:
+--   - raven-wai
+--   - servant-raven
+--   - servant-raven-server
+--   - ucam-webauth
+--   - ucam-webauth-types
+-- @
+githubUrl :: CharParsing m => m (Name Owner, Name Repo)
+githubUrl = do
+  _ <- string "https://" <|> string "git@"
+  _ <- string "github.com"
+  _ <- char ':' <|> char '/'
+  owner <- fromString @(Name Owner) <$> notChar '/' `manyTill` char '/'
+  repo <- fromString @(Name Repo) <$> notChar '/' `manyTill` choice [ void (string "/"), void (string ".git"), eof ]
+  pure (owner, repo)

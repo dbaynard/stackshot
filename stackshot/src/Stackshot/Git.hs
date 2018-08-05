@@ -17,17 +17,14 @@ module Stackshot.Git
 
 import           "base"                   Control.Monad
 import           "base"                   Data.Bifunctor
-import           "bytestring"             Data.ByteString (ByteString)
 import qualified "base64-bytestring"      Data.ByteString.Base64 as B64
-import           "base64-bytestring-type" Data.ByteString.Base64.Type
 import           "text"                   Data.Text (Text)
 import qualified "text"                   Data.Text as T
 import           "text"                   Data.Text.Encoding
-import           "Cabal"                  Distribution.Package (PackageName, pkgVersion)
+import           "Cabal"                  Distribution.Package (pkgVersion)
 import           "Cabal"                  Distribution.PackageDescription
 import           "Cabal"                  Distribution.PackageDescription.Parse
-import           "Cabal"                  Distribution.Version (Version, mkVersion)
-import           "Cabal"                  Distribution.Verbosity (normal)
+import           "Cabal"                  Distribution.Version (Version)
 import           "base"                   GHC.Generics
 import           "github"                 GitHub.Data hiding (Error)
 import qualified "github"                 GitHub.Endpoints.Repos.Contents as GC
@@ -41,7 +38,7 @@ data RepoPackage = RepoPackage
   { rSource   :: RepoSource
   , rOwner    :: Name Owner
   , rRepo     :: Name Repo
-  , rFilepath :: Text
+  , rFilepath :: Text -- ^ Cabal filepath
   , rCommit   :: Maybe Text
   }
   deriving stock (Show, Eq, Generic)
@@ -58,9 +55,9 @@ exampleGithubRepo = RepoPackage
 
 githubVersion :: RepoPackage -> IO (Either Error Version)
 githubVersion rp = do
-  cbl <- first (ParserError . T.pack . show) <$> repoCabal rp
+  cbl <- parserError . first show <$> repoCabal rp
   pure $ do
-    pkg <- decodeCabal =<< decodeGHContent =<< cbl
+    pkg <- decodeCabal =<< decodeGHContentFile =<< cbl
     pure . pkgVersion . package . packageDescription $ pkg
 
 repoCabal :: RepoPackage -> IO (Either GC.Error Content)
@@ -70,9 +67,15 @@ repoCabal RepoPackage{rSource = GitHub, ..} = do
 decodeCabal :: Text -> Either Error GenericPackageDescription
 decodeCabal = parsing . parseGenericPackageDescription . T.unpack
 
-decodeGHContent :: Content -> Either Error Text
-decodeGHContent (ContentFile (ContentFileData{contentFileEncoding = "base64", ..})) =
-  first (ParserError . T.pack . show) . decodeUtf8' <=< first (ParserError . T.pack) . B64.decode . encodeUtf8 . T.filter (/= '\n') $ contentFileContent
+decodeGHContentFile :: Content -> Either Error Text
+decodeGHContentFile (ContentFile (ContentFileData{contentFileEncoding = "base64", ..})) =
+  parserError . first show . decodeUtf8' <=<
+  parserError . B64.decode . encodeUtf8 . T.filter (/= '\n') $
+  contentFileContent
+decodeGHContentFile (ContentFile _) =
+  Left (ParserError "Can only decode base64 encoded content")
+decodeGHContentFile (ContentDirectory _) =
+  Left ReadError
 
 parsing :: ParseResult a -> Either Error a
 parsing (ParseOk [] a) = Right a

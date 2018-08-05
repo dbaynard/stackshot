@@ -10,9 +10,9 @@
   , OverloadedLists
   , OverloadedStrings
   , RankNTypes
+  , StandaloneDeriving
   , TypeApplications
   , TypeOperators
-  , StandaloneDeriving
   #-}
 
 -- |
@@ -44,9 +44,17 @@ module Stackshot.Internal
   , buildMap
   , buildMapMaybe
   , (<??>)
+  , onJust
+
+  -- * Json-autotype
+  -- $json-autotype
+  , _AltLeft
+  , _AltRight
   ) where
 
 import           "lens"             Control.Lens hiding (noneOf)
+import           "json-autotype"    Data.Aeson.AutoType.Alternative
+import           "base"             Control.Applicative
 import           "base"             Data.Bifunctor
 import           "base"             Data.Data
 import           "base"             Data.Foldable
@@ -133,3 +141,31 @@ buildMap' f = foldl' (\m (k, v) -> m & at k `f` v) mempty
 (<??>) :: Parsing m => String -> m a -> m a
 (<??>) = flip (<?>)
 infixr 0 <??>
+
+-- | This is like `maybe`, but the last parameter is the continuation for Just
+onJust :: Maybe a -> b -> (a -> b) -> b
+onJust ma b = maybe b `flip` ma
+{-# INLINE onJust #-}
+infix 1 `onJust`
+
+--------------------------------------------------
+-- $json-autotype
+--
+-- Some helpers for interacting with automated json data structures
+
+_AltLeft :: (a :|: b)  `Prism'` a
+_AltLeft = prism' AltLeft _altLeft
+  where
+    _altLeft (AltLeft a) = pure a
+    _altLeft _           = empty
+{-# INLINE _AltLeft #-}
+
+_AltRight :: (a :|: b)  `Prism'` b
+_AltRight = prism' AltRight _altRight
+  where
+    _altRight (AltRight b) = pure b
+    _altRight _            = empty
+{-# INLINE _AltRight #-}
+
+
+
