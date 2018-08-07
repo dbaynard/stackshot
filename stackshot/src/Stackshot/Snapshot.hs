@@ -17,8 +17,6 @@ import           "base"          Data.Bifunctor
 import           "text"          Data.Text (Text)
 import qualified "text"          Data.Text as T
 import           "yaml"          Data.Yaml hiding ((.=))
-import           "Cabal"         Distribution.Package (PackageName)
-import           "Cabal"         Distribution.Version (Version)
 import           "github"        GitHub.Data (Name, Owner, Repo, untagName)
 import           "this"          Stackshot.Git
 import           "this"          Stackshot.Internal
@@ -46,13 +44,13 @@ stackmapFromYaml = fmap (StackMap . buildMap . mconcat) . traverse f . topLevelP
   where
     f = (fmap pure . fromEither . explicit) `alt` ( github `alt` (pure @IO . const []) )
 
-explicit :: Text -> Either Error (PackageName, Version)
+explicit :: Text -> Either Error (PkgName, PkgVersion)
 explicit = parserError . AT.parseOnly versionedPkg
 
-github :: PackagesElt -> IO [(PackageName, Version)]
+github :: PackagesElt -> IO [(PkgName, PkgVersion)]
 github =  traverse f . asRepo
   where
-    f :: Either Error RepoPackage -> IO (PackageName, Version)
+    f :: Either Error RepoPackage -> IO (PkgName, PkgVersion)
     f eep = do
       p <- fromEither eep
       githubPackage p

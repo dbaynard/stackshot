@@ -62,8 +62,7 @@ import qualified "bytestring" Data.ByteString as BS
 import qualified "base"       Data.List as List
 import           "base"       Data.String
 import           "text"       Data.Text (Text)
-import           "Cabal"      Distribution.Package (PackageName)
-import           "Cabal"      Distribution.Version (Version, mkVersion)
+import           "Cabal"      Distribution.Version (mkVersion)
 import           "github"     GitHub.Data (Name, Owner, Repo)
 import           "servant"    Servant.API
 import           "this"       Stackshot.Internal
@@ -108,29 +107,29 @@ sccHeader = fmap unlines . some $ do
 
 -- | Parses @    package ==3.4.5,@ to (package, Just 3.4.5) and
 -- @    package installed,@ to (package, Nothing).
-sccEntry :: TokenParsing m => m (PackageName, Maybe Version)
+sccEntry :: TokenParsing m => m (PkgName, Maybe PkgVersion)
 sccEntry = do
   _ <- spaces
-  pkgname <- fromString @PackageName <$> notChar ' ' `manyTill` space
+  pkgname <- fromString @PkgName <$> notChar ' ' `manyTill` space
   pkgver <- pure <$> pkgVer <|> string "installed" *> pure Nothing
   pure (pkgname, pkgver)
 
-readVersion :: Text -> Either Error Version
+readVersion :: Text -> Either Error PkgVersion
 readVersion = parserError . AT.parseOnly version
 
 -- | Parses @package-name-3.4.5@ to (package-name, 3.4.5)
-versionedPkg :: TokenParsing m => m (PackageName, Version)
+versionedPkg :: TokenParsing m => m (PkgName, PkgVersion)
 versionedPkg = do
-  pkgname <- fromString @PackageName . List.intercalate "-" <$> some alphaNum `endBy1` char '-'
+  pkgname <- fromString @PkgName . List.intercalate "-" <$> some alphaNum `endBy1` char '-'
   pkgver <- version
   pure (pkgname, pkgver)
 
-pkgVer :: TokenParsing m => m Version
+pkgVer :: TokenParsing m => m PkgVersion
 pkgVer = string "==" *> version
 
-version :: TokenParsing m => m Version
+version :: TokenParsing m => m PkgVersion
 version = do
-  mkVersion . fmap fromIntegral <$> natural `sepBy1` char '.'
+  PkgVersion . mkVersion . fmap fromIntegral <$> natural `sepBy1` char '.'
 
 --------------------------------------------------
 -- $git

@@ -35,6 +35,8 @@ module Stackshot.Internal
   -- $datatypes
     StackMap(..)
   , Snapshot(..)
+  , PkgName(..)
+  , PkgVersion(..)
 
   -- $pkg-config
   , PkgConfig(..)
@@ -63,17 +65,19 @@ module Stackshot.Internal
 import           "base"             Control.Applicative
 import           "lens"             Control.Lens hiding (noneOf)
 import           "json-autotype"    Data.Aeson.AutoType.Alternative
+import           "aeson"            Data.Aeson.Types
 import           "base"             Data.Bifunctor
 import           "base"             Data.Data
 import           "base"             Data.Foldable
 import qualified "containers"       Data.Map.Strict as MapS
+import           "base"             Data.String (IsString)
 import           "text"             Data.Text (Text)
 import qualified "text"             Data.Text as T
 import           "time"             Data.Time
-import           "Cabal"            Distribution.Package (PackageName)
-import           "Cabal"            Distribution.Version (Version)
+import           "Cabal"            Distribution.Package (PackageName, mkPackageName, unPackageName)
+import           "Cabal"            Distribution.Version (Version, mkVersion', showVersion)
 import           "base"             GHC.Generics
-import           "template-haskell" Language.Haskell.TH.Syntax
+import           "template-haskell" Language.Haskell.TH.Syntax hiding (PkgName)
 import           "parsers"          Text.Parser.Combinators
 import           "unliftio"         UnliftIO (MonadUnliftIO)
 import           "unliftio"         UnliftIO.Exception
@@ -82,8 +86,9 @@ import           "unliftio"         UnliftIO.Exception
 -- $datatypes
 
 -- | A map linking each package (key) to an individual version (value).
-newtype StackMap = StackMap (MapS.Map PackageName Version)
+newtype StackMap = StackMap (MapS.Map PkgName PkgVersion)
   deriving stock (Show, Eq, Generic)
+  deriving anyclass (ToJSON, FromJSON)
 
 -- | A stackage snapshot.
 data Snapshot
@@ -91,6 +96,30 @@ data Snapshot
   | Nightly (Maybe Day)    -- ^ Nightly snapshots may have a @-/YYYY-MM-DD/@ suffix.
   deriving stock (Show, Eq, Ord, Generic, Data)
   deriving anyclass (Lift)
+
+-- | Package names with JSON instances
+newtype PkgName = PkgName {unPkgName :: PackageName}
+  deriving stock (Show, Eq, Ord, Generic, Data)
+  deriving newtype (IsString)
+  deriving anyclass (ToJSONKey, FromJSONKey)
+
+instance FromJSON PkgName where
+  parseJSON = fmap (PkgName . mkPackageName) . parseJSON
+
+instance ToJSON PkgName where
+  toJSON = toJSON . unPackageName . unPkgName
+  toEncoding = toEncoding . unPackageName . unPkgName
+
+-- | Package names with JSON instances
+newtype PkgVersion = PkgVersion {unPkgVersion :: Version}
+  deriving stock (Show, Eq, Ord, Generic, Data)
+
+instance FromJSON PkgVersion where
+  parseJSON = fmap (PkgVersion . mkVersion') . parseJSON
+
+instance ToJSON PkgVersion where
+  toJSON = toJSON . showVersion . unPkgVersion
+  toEncoding = toEncoding . showVersion . unPkgVersion
 
 --------------------------------------------------
 -- $pkg-config

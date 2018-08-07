@@ -27,10 +27,9 @@ import           "text"              Data.Text (Text)
 import qualified "text"              Data.Text as T
 import           "text"              Data.Text.Encoding
 import qualified "yaml"              Data.Yaml as Y
-import           "Cabal"             Distribution.Package (pkgName, pkgVersion, PackageName, mkPackageName)
+import           "Cabal"             Distribution.Package (pkgName, pkgVersion, mkPackageName)
 import           "Cabal"             Distribution.PackageDescription
 import           "Cabal"             Distribution.PackageDescription.Parse
-import           "Cabal"             Distribution.Version (Version)
 import           "base"              GHC.Generics (Generic)
 import qualified "github"            GitHub.Data as GH (Error(..))
 import           "github"            GitHub.Data hiding (Error(..))
@@ -70,7 +69,7 @@ exampleGithubRepo = RepoPackage
   , rCommit   = Just "develop"
   }
 
-githubPackage :: RepoPackage -> IO (PackageName, Version)
+githubPackage :: RepoPackage -> IO (PkgName, PkgVersion)
 githubPackage rp = do
   pkgConf <- repoPkgConfig rp
   fromEither $ do
@@ -89,16 +88,16 @@ repoPkgConfig RepoPackage{rSource = GitHub, ..} = do
     asHpack = errorFromGithubError `bimap` Hpack <$>
       GC.contentsFor rOwner rRepo rHpack rCommit
 
-decodePkgConfig :: PkgConfig Text -> Either Error (PackageName, Version)
-decodePkgConfig (Cabal a) = (pkgName &&& pkgVersion) . package . packageDescription <$> decodeCabal a
+decodePkgConfig :: PkgConfig Text -> Either Error (PkgName, PkgVersion)
+decodePkgConfig (Cabal a) = (PkgName . pkgName &&& PkgVersion . pkgVersion) . package . packageDescription <$> decodeCabal a
 decodePkgConfig (Hpack a) = decodeHpack a
 
-decodeHpack :: Text -> Either Error (PackageName, Version)
+decodeHpack :: Text -> Either Error (PkgName, PkgVersion)
 decodeHpack contents = do
   val <- parserError . first Y.prettyPrintParseException .
     Y.decodeEither' @Y.Value . encodeUtf8 $ contents
   name <- note (ParserError "Could not find package name") $
-    val ^? key "name" . _String . to T.unpack . to mkPackageName
+    val ^? key "name" . _String . to T.unpack . to (PkgName . mkPackageName)
   ver <- note (ParserError "Could not find package version") $
     val ^? key "version" . _String . to readVersion . _Right
   pure (name, ver)
