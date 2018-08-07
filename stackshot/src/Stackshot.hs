@@ -10,14 +10,18 @@ module Stackshot
 import           "errors"        Control.Error
 import           "lens"          Control.Lens
 import           "base"          Control.Monad
-import           "base"          Control.Monad.IO.Class
 import qualified "bytestring"    Data.ByteString.Lazy.Char8 as B8L
+import qualified "containers"    Data.Map.Strict as Map (union)
 import           "hackage-db"    Distribution.Hackage.DB
 import           "Cabal"         Distribution.Package (PackageName)
 import           "Cabal"         Distribution.Version (Version)
 import           "this"          Stackshot.Internal
+import           "this"          Stackshot.Snapshot
+import           "this"          Stackshot.Stackage
 import           "filepath"      System.FilePath
 import           "typed-process" System.Process.Typed
+import           "unliftio"      UnliftIO (MonadUnliftIO, MonadIO, liftIO)
+import           "unliftio"      UnliftIO.Exception
 
 --------------------------------------------------
 -- * Comparing snapshot with hackage
@@ -31,6 +35,16 @@ updated hack (StackMap snap) = StackMap $ imap f snap
       l <- PkgVersion <$> latest n hack
       guard $ l > v
       pure l
+
+resolveSnapshotFile :: MonadUnliftIO m => FilePath -> m StackMap
+resolveSnapshotFile
+    = uncurry resolveSnapshot
+  <=< readSnapshotFile'
+
+resolveSnapshot :: MonadIO m => Snapshot -> StackMap -> m StackMap
+resolveSnapshot s (StackMap m0) = do
+  StackMap m <- fromEitherIO $ stackageReq s
+  pure . StackMap $ Map.union m0 m
 
 --------------------------------------------------
 -- * Hackage

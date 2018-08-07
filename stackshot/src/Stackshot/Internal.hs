@@ -55,6 +55,7 @@ module Stackshot.Internal
   , buildMapMaybe
   , (<??>)
   , onJust
+  , azip
 
   -- * Json-autotype
   -- $json-autotype
@@ -213,6 +214,11 @@ onJust :: Maybe a -> b -> (a -> b) -> b
 onJust ma b = maybe b `flip` ma
 {-# INLINE onJust #-}
 infix 1 `onJust`
+
+-- | Zip together two applicatives into one
+azip :: Applicative f => (f a, f b) -> f (a, b)
+azip = uncurry $ (<*>) . fmap (,)
+{-# INLINE azip #-}
 
 --------------------------------------------------
 -- $json-autotype

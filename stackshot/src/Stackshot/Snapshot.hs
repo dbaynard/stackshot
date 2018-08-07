@@ -10,6 +10,7 @@ module Stackshot.Snapshot
   ( module Stackshot.Snapshot
   ) where
 
+import           "base"          Control.Arrow ((&&&))
 import           "base"          Control.Monad
 import           "json-autotype" Data.Aeson.AutoType.Alternative (alt)
 import qualified "attoparsec"    Data.Attoparsec.Text as AT
@@ -21,17 +22,24 @@ import           "github"        GitHub.Data (Name, Owner, Repo, untagName)
 import           "this"          Stackshot.Git
 import           "this"          Stackshot.Internal
 import           "this"          Stackshot.Parser
-import           "this"          Stackshot.Snapshot.Auto
-import qualified "this"          Stackshot.Snapshot.Auto as A
+import           "this"          Stackshot.Snapshot.Auto as A
+import           "this"          Stackshot.Stackage
 import           "filepath"      System.FilePath
 import           "unliftio"      UnliftIO (MonadUnliftIO, liftIO)
 import           "unliftio"      UnliftIO.Exception
 
+--------------------------------------------------
+-- * Snapshot files
+--------------------------------------------------
+
 type SnapshotYaml = A.TopLevel
 
 readSnapshotFile :: MonadUnliftIO m => FilePath -> m StackMap
-readSnapshotFile
-    = liftIO . stackmapFromYaml
+readSnapshotFile = fmap snd . readSnapshotFile'
+
+readSnapshotFile' :: MonadUnliftIO m => FilePath -> m (Snapshot, StackMap)
+readSnapshotFile'
+    = azip . (fromEither . onResolver &&& liftIO . stackmapFromYaml)
   <=< fromEitherIO . parseSnapshotFile
 
 parseSnapshotFile :: MonadUnliftIO m => FilePath -> m (Either Error SnapshotYaml)
@@ -71,3 +79,12 @@ asRepo PackagesElt{..} = do
   where
     rSource      = GitHub
     rCommit      = Just packagesEltCommit
+
+--------------------------------------------------
+-- * Resolvers
+--------------------------------------------------
+
+onResolver :: SnapshotYaml -> Either Error Snapshot
+onResolver = parserError . AT.parseOnly parser . topLevelResolver
+  where
+    parser = parseSnapshot

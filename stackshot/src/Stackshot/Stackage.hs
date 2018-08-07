@@ -33,6 +33,9 @@ module Stackshot.Stackage
   , getStackageCabalConfig
   , stackageBaseURL
   , stackageReq
+
+    -- * Parsers
+  , parseSnapshot
   ) where
 
 import           "base"             Control.Applicative
