@@ -7,6 +7,7 @@
   , OverloadedStrings
   , RecordWildCards
   , StrictData
+  , TypeApplications
   , TypeInType
   , TypeOperators
   #-}
@@ -15,23 +16,28 @@ module Stackshot.Git
   ( module Stackshot.Git
   ) where
 
-import           "base"                   Control.Arrow ((&&&))
-import           "base"                   Control.Monad
-import           "base"                   Data.Bifunctor
-import qualified "base64-bytestring"      Data.ByteString.Base64 as B64
-import           "text"                   Data.Text (Text)
-import qualified "text"                   Data.Text as T
-import           "text"                   Data.Text.Encoding
-import           "Cabal"                  Distribution.Package (pkgName, pkgVersion, PackageName)
-import           "Cabal"                  Distribution.PackageDescription
-import           "Cabal"                  Distribution.PackageDescription.Parse
-import           "Cabal"                  Distribution.Version (Version)
-import           "base"                   GHC.Generics
-import qualified "github"                 GitHub.Data as GH (Error(..))
-import           "github"                 GitHub.Data hiding (Error(..))
-import qualified "github"                 GitHub.Endpoints.Repos.Contents as GC
-import           "this"                   Stackshot.Internal
-import           "unliftio"               UnliftIO.Exception
+import           "base"              Control.Arrow ((&&&))
+import           "errors"            Control.Error
+import           "lens"              Control.Lens
+import           "base"              Control.Monad
+import           "lens-aeson"        Data.Aeson.Lens
+import           "base"              Data.Bifunctor
+import qualified "base64-bytestring" Data.ByteString.Base64 as B64
+import           "text"              Data.Text (Text)
+import qualified "text"              Data.Text as T
+import           "text"              Data.Text.Encoding
+import qualified "yaml"              Data.Yaml as Y
+import           "Cabal"             Distribution.Package (pkgName, pkgVersion, PackageName, mkPackageName)
+import           "Cabal"             Distribution.PackageDescription
+import           "Cabal"             Distribution.PackageDescription.Parse
+import           "Cabal"             Distribution.Version (Version)
+import           "base"              GHC.Generics (Generic)
+import qualified "github"            GitHub.Data as GH (Error(..))
+import           "github"            GitHub.Data hiding (Error(..))
+import qualified "github"            GitHub.Endpoints.Repos.Contents as GC
+import           "this"              Stackshot.Internal
+import           "this"              Stackshot.Parser
+import           "unliftio"          UnliftIO.Exception
 
 data RepoSource
   = GitHub
@@ -66,15 +72,36 @@ exampleGithubRepo = RepoPackage
 
 githubPackage :: RepoPackage -> IO (PackageName, Version)
 githubPackage rp = do
-  cbl <- repoCabal rp
+  pkgConf <- repoPkgConfig rp
   fromEither $ do
-    pkg <- decodeCabal <=< decodeGHContentFile $ cbl
-    pure . (pkgName &&& pkgVersion) . package . packageDescription $ pkg
+    contents <- decodeGHContentFile `traverse` pkgConf
+    decodePkgConfig contents
 
-repoCabal :: RepoPackage -> IO Content
-repoCabal RepoPackage{rSource = GitHub, ..} =
-  fromEitherIO $ first errorFromGithubError <$>
-    GC.contentsFor rOwner rRepo rCabal rCommit
+repoPkgConfig :: RepoPackage -> IO (PkgConfig Content)
+repoPkgConfig RepoPackage{rSource = GitHub, ..} = do
+    print rCabal
+    catchAny (fromEitherIO asCabal) $ \_ -> do
+      print rHpack
+      fromEitherIO asHpack
+  where
+    asCabal = errorFromGithubError `bimap` Cabal <$>
+      GC.contentsFor rOwner rRepo rCabal rCommit
+    asHpack = errorFromGithubError `bimap` Hpack <$>
+      GC.contentsFor rOwner rRepo rHpack rCommit
+
+decodePkgConfig :: PkgConfig Text -> Either Error (PackageName, Version)
+decodePkgConfig (Cabal a) = (pkgName &&& pkgVersion) . package . packageDescription <$> decodeCabal a
+decodePkgConfig (Hpack a) = decodeHpack a
+
+decodeHpack :: Text -> Either Error (PackageName, Version)
+decodeHpack contents = do
+  val <- parserError . first Y.prettyPrintParseException .
+    Y.decodeEither' @Y.Value . encodeUtf8 $ contents
+  name <- note (ParserError "Could not find package name") $
+    val ^? key "name" . _String . to T.unpack . to mkPackageName
+  ver <- note (ParserError "Could not find package version") $
+    val ^? key "version" . _String . to readVersion . _Right
+  pure (name, ver)
 
 decodeCabal :: Text -> Either Error GenericPackageDescription
 decodeCabal = parsing . parseGenericPackageDescription . T.unpack

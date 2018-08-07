@@ -26,6 +26,9 @@ module Stackshot.Parser
   , parseSCCFile
   , parseSCC
 
+  -- ** Versions
+  , readVersion
+
   -- ** Git urls
   , githubUrl
 
@@ -35,6 +38,7 @@ module Stackshot.Parser
   , sccEntry
   , versionedPkg
   , pkgVer
+  , version
 
   -- * Error handling
   -- $errors
@@ -52,10 +56,12 @@ import           "base"       Control.Applicative
 import           "mtl"        Control.Monad.Except
 import qualified "attoparsec" Data.Attoparsec.ByteString.Char8 as A8
 import qualified "attoparsec" Data.Attoparsec.ByteString.Lazy as AL
+import qualified "attoparsec" Data.Attoparsec.Text as AT
 import           "bytestring" Data.ByteString (ByteString)
 import qualified "bytestring" Data.ByteString as BS
 import qualified "base"       Data.List as List
 import           "base"       Data.String
+import           "text"       Data.Text (Text)
 import           "Cabal"      Distribution.Package (PackageName)
 import           "Cabal"      Distribution.Version (Version, mkVersion)
 import           "github"     GitHub.Data (Name, Owner, Repo)
@@ -109,18 +115,22 @@ sccEntry = do
   pkgver <- pure <$> pkgVer <|> string "installed" *> pure Nothing
   pure (pkgname, pkgver)
 
+readVersion :: Text -> Either Error Version
+readVersion = parserError . AT.parseOnly version
+
 -- | Parses @package-name-3.4.5@ to (package-name, 3.4.5)
 versionedPkg :: TokenParsing m => m (PackageName, Version)
 versionedPkg = do
   pkgname <- fromString @PackageName . List.intercalate "-" <$> some alphaNum `endBy1` char '-'
-  pkgver <- mkVersion . fmap fromIntegral <$> natural `sepBy1` char '.'
+  pkgver <- version
   pure (pkgname, pkgver)
 
 pkgVer :: TokenParsing m => m Version
-pkgVer = do
-  _ <- string "=="
-  ver <- mkVersion . fmap fromIntegral <$> natural `sepBy1` char '.'
-  pure ver
+pkgVer = string "==" *> version
+
+version :: TokenParsing m => m Version
+version = do
+  mkVersion . fmap fromIntegral <$> natural `sepBy1` char '.'
 
 --------------------------------------------------
 -- $git

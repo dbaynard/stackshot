@@ -2,7 +2,10 @@
     PackageImports
   , DeriveAnyClass
   , DeriveDataTypeable
+  , DeriveFoldable
+  , DeriveFunctor
   , DeriveGeneric
+  , DeriveTraversable
   , DerivingStrategies
   , FlexibleContexts
   , GeneralizedNewtypeDeriving
@@ -32,6 +35,11 @@ module Stackshot.Internal
   -- $datatypes
     StackMap(..)
   , Snapshot(..)
+
+  -- $pkg-config
+  , PkgConfig(..)
+  , _Cabal
+  , _Hpack
 
   -- * Error handling
   -- $errors
@@ -83,6 +91,32 @@ data Snapshot
   | Nightly (Maybe Day)    -- ^ Nightly snapshots may have a @-/YYYY-MM-DD/@ suffix.
   deriving stock (Show, Eq, Ord, Generic, Data)
   deriving anyclass (Lift)
+
+--------------------------------------------------
+-- $pkg-config
+--
+--
+
+-- | How is the package configured? For example, with package
+-- 'acme-everything':
+data PkgConfig a
+  = Cabal a -- ^ acme-everything.cabal
+  | Hpack a -- ^ package.yaml
+  deriving stock (Show, Eq, Ord, Generic, Data, Functor, Foldable, Traversable)
+
+_Cabal :: PkgConfig a `Prism'` a
+_Cabal = prism' Cabal _cabal
+  where
+    _cabal (Cabal a) = pure a
+    _cabal _ = empty
+{-# INLINE _Cabal #-}
+
+_Hpack :: PkgConfig a `Prism'` a
+_Hpack = prism' Hpack _hpack
+  where
+    _hpack (Hpack a) = pure a
+    _hpack _ = empty
+{-# INLINE _Hpack #-}
 
 --------------------------------------------------
 -- $errors

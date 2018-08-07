@@ -60,14 +60,15 @@ library:
   - bytestring
   - containers
   - directory
+  - errors
   - filepath
   - github
   - hackage-db
-  - hpack
   - http-api-data
   - http-client-tls
   - json-autotype
   - lens
+  - lens-aeson
   - mtl
   - parsers
   - servant

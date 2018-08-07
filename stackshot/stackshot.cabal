@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 28e6bfc39d01ebabcf9774f4eb144b4091d8c62ae13524b36cce6977c2feffe0
+-- hash: 66b8d0559752f0f24009f432b4956019b598e4d5bebcada80273eb83877536b3
 
 name:           stackshot
 version:        0.1.0.0
@@ -56,14 +56,15 @@ library
     , bytestring
     , containers
     , directory
+    , errors
     , filepath
     , github
     , hackage-db
-    , hpack
     , http-api-data
     , http-client-tls
     , json-autotype
     , lens
+    , lens-aeson
     , mtl
     , parsers
     , servant
