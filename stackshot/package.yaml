@@ -51,6 +51,7 @@ library:
   - Stackshot.Snapshot
   - Stackshot.Snapshot.Auto
   - Stackshot.Stackage
+  - Stackshot.StackMap
   dependencies:
   - Cabal
   - aeson

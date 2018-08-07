@@ -11,7 +11,7 @@ import           "errors"        Control.Error
 import           "lens"          Control.Lens
 import           "base"          Control.Monad
 import qualified "bytestring"    Data.ByteString.Lazy.Char8 as B8L
-import qualified "containers"    Data.Map.Strict as Map (toList, union)
+import qualified "containers"    Data.Map.Strict as MapS (toAscList, union)
 import           "hackage-db"    Distribution.Hackage.DB
 import           "Cabal"         Distribution.Package (PackageName)
 import           "Cabal"         Distribution.Version (Version)
@@ -44,7 +44,7 @@ upToDate hack (StackMap snap) = StackMap $ imap f snap
       pure l
 
 updated :: HackageDB -> StackMap -> StackMap
-updated hack (StackMap snap) = StackMap . buildMapMaybe . Map.toList $ imap f snap
+updated hack (StackMap snap) = StackMap . buildMapMaybe . MapS.toAscList $ imap f snap
   where
     f :: PkgName -> PkgVersion -> Maybe PkgVersion
     f (PkgName n) v = do
@@ -60,7 +60,7 @@ resolveSnapshotFile
 resolveSnapshot :: MonadIO m => Snapshot -> StackMap -> m StackMap
 resolveSnapshot s (StackMap m0) = do
   StackMap m <- fromEitherIO $ stackageReq s
-  pure . StackMap $ Map.union m0 m
+  pure . StackMap $ MapS.union m0 m
 
 --------------------------------------------------
 -- * Hackage

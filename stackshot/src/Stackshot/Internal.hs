@@ -90,7 +90,6 @@ import           "unliftio"         UnliftIO.Exception
 -- | A map linking each package (key) to an individual version (value).
 newtype StackMap = StackMap (MapS.Map PkgName PkgVersion)
   deriving stock (Show, Eq, Generic)
-  deriving anyclass (ToJSON, FromJSON)
   deriving newtype (Semigroup, Monoid)
 
 -- | A stackage snapshot.
