@@ -52,9 +52,9 @@ module Stackshot.Internal
   , _AltRight
   ) where
 
+import           "base"             Control.Applicative
 import           "lens"             Control.Lens hiding (noneOf)
 import           "json-autotype"    Data.Aeson.AutoType.Alternative
-import           "base"             Control.Applicative
 import           "base"             Data.Bifunctor
 import           "base"             Data.Data
 import           "base"             Data.Foldable
@@ -99,6 +99,9 @@ data Snapshot
 data Error
   = ReadError
   | ParserError Text
+  | GithubError Text
+  | NetworkError Text
+  | UserError Text
   deriving stock (Show, Eq, Typeable)
   deriving anyclass (Exception)
 

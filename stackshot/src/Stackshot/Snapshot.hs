@@ -3,6 +3,7 @@
   , NamedFieldPuns
   , OverloadedStrings
   , RecordWildCards
+  , TypeApplications
   #-}
 
 module Stackshot.Snapshot
@@ -25,6 +26,7 @@ import           "this"          Stackshot.Snapshot.Auto
 import qualified "this"          Stackshot.Snapshot.Auto as A
 import           "filepath"      System.FilePath
 import           "unliftio"      UnliftIO (MonadUnliftIO, liftIO)
+import           "unliftio"      UnliftIO.Exception
 
 type SnapshotYaml = A.TopLevel
 
@@ -39,11 +41,16 @@ parseSnapshotFile
 stackmapFromYaml :: SnapshotYaml -> StackMap
 stackmapFromYaml = undefined
 
-explicit :: Text -> Either String (PackageName, Version)
-explicit = AT.parseOnly versionedPkg
+explicit :: Text -> Either Error (PackageName, Version)
+explicit = parserError . AT.parseOnly versionedPkg
 
--- github :: PackagesElt -> Either String (PackageName, Version)
--- github PackagesElt{..} =
+github :: PackagesElt -> IO [(PackageName, Version)]
+github =  traverse f . asRepo
+  where
+    f :: Either Error RepoPackage -> IO (PackageName, Version)
+    f eep = do
+      p <- fromEither eep
+      githubPackage p
 
 parseGitUrl :: Text -> Either Error (Name Owner, Name Repo)
 parseGitUrl = parserError . AT.parseOnly githubUrl
