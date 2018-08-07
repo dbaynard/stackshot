@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ebbaa5c6e9bf7acd46a5e3b865a2672821be54c55f2a2f7c24a688cf0c431caa
+-- hash: 66b8d0559752f0f24009f432b4956019b598e4d5bebcada80273eb83877536b3
 
 name:           stackshot
 version:        0.1.0.0
@@ -34,6 +34,7 @@ flag dev
 library
   exposed-modules:
       Stackshot
+      Stackshot.Git
       Stackshot.Internal
       Stackshot.Parser
       Stackshot.QQ
@@ -50,15 +51,20 @@ library
     , aeson
     , attoparsec
     , base >=4.7 && <5
+    , base64-bytestring
+    , base64-bytestring-type
     , bytestring
     , containers
     , directory
+    , errors
     , filepath
+    , github
     , hackage-db
     , http-api-data
     , http-client-tls
     , json-autotype
     , lens
+    , lens-aeson
     , mtl
     , parsers
     , servant

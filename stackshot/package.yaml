@@ -44,6 +44,7 @@ library:
   source-dirs: src
   exposed-modules:
   - Stackshot
+  - Stackshot.Git
   - Stackshot.Internal
   - Stackshot.Parser
   - Stackshot.QQ
@@ -54,15 +55,20 @@ library:
   - Cabal
   - aeson
   - attoparsec
+  - base64-bytestring
+  - base64-bytestring-type
   - bytestring
   - containers
   - directory
+  - errors
   - filepath
+  - github
   - hackage-db
   - http-api-data
   - http-client-tls
   - json-autotype
   - lens
+  - lens-aeson
   - mtl
   - parsers
   - servant

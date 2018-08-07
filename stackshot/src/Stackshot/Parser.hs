@@ -26,12 +26,19 @@ module Stackshot.Parser
   , parseSCCFile
   , parseSCC
 
+  -- ** Versions
+  , readVersion
+
+  -- ** Git urls
+  , githubUrl
+
   -- ** Parser combinators
   , stackageCabalConfig
   , sccHeader
   , sccEntry
   , versionedPkg
   , pkgVer
+  , version
 
   -- * Error handling
   -- $errors
@@ -49,12 +56,15 @@ import           "base"       Control.Applicative
 import           "mtl"        Control.Monad.Except
 import qualified "attoparsec" Data.Attoparsec.ByteString.Char8 as A8
 import qualified "attoparsec" Data.Attoparsec.ByteString.Lazy as AL
+import qualified "attoparsec" Data.Attoparsec.Text as AT
 import           "bytestring" Data.ByteString (ByteString)
 import qualified "bytestring" Data.ByteString as BS
 import qualified "base"       Data.List as List
 import           "base"       Data.String
+import           "text"       Data.Text (Text)
 import           "Cabal"      Distribution.Package (PackageName)
 import           "Cabal"      Distribution.Version (Version, mkVersion)
+import           "github"     GitHub.Data (Name, Owner, Repo)
 import           "servant"    Servant.API
 import           "this"       Stackshot.Internal
 import           "parsers"    Text.Parser.Char
@@ -105,15 +115,56 @@ sccEntry = do
   pkgver <- pure <$> pkgVer <|> string "installed" *> pure Nothing
   pure (pkgname, pkgver)
 
+readVersion :: Text -> Either Error Version
+readVersion = parserError . AT.parseOnly version
+
 -- | Parses @package-name-3.4.5@ to (package-name, 3.4.5)
 versionedPkg :: TokenParsing m => m (PackageName, Version)
 versionedPkg = do
   pkgname <- fromString @PackageName . List.intercalate "-" <$> some alphaNum `endBy1` char '-'
-  pkgver <- mkVersion . fmap fromIntegral <$> natural `sepBy1` char '.'
+  pkgver <- version
   pure (pkgname, pkgver)
 
 pkgVer :: TokenParsing m => m Version
-pkgVer = do
-  _ <- string "=="
-  ver <- mkVersion . fmap fromIntegral <$> natural `sepBy1` char '.'
-  pure ver
+pkgVer = string "==" *> version
+
+version :: TokenParsing m => m Version
+version = do
+  mkVersion . fmap fromIntegral <$> natural `sepBy1` char '.'
+
+--------------------------------------------------
+-- $git
+--
+-- Parse git repo urls
+
+-- | For example,
+--
+-- @
+-- - git: https://github.com/dbaynard/haskell
+--   commit: ccbf50014bcb8e233b9a99604d7c2e3610611f58
+--   subdirs:
+--   - forestay
+--   - forestay-data
+--   - forestay-serial
+--   - readp
+-- @
+--
+-- @
+-- - git: git@bitbucket.org:dbaynard/ucamwebauth.git
+--   commit: 8b9f8f7a9ed6ad3a81131192c6ae1f51191c99f4
+--   subdirs:
+--   - raven-wai
+--   - servant-raven
+--   - servant-raven-server
+--   - ucam-webauth
+--   - ucam-webauth-types
+-- @
+githubUrl :: CharParsing m => m (Name Owner, Name Repo)
+githubUrl = do
+  _ <- string "https://" <|> string "git@"
+  _ <- optional $ string "www."
+  _ <- string "github.com"
+  _ <- char ':' <|> char '/'
+  owner <- fromString @(Name Owner) <$> notChar '/' `manyTill` char '/'
+  repo <- fromString @(Name Repo) <$> notChar '/' `manyTill` choice [ void (string "/"), void (string ".git"), eof ]
+  pure (owner, repo)

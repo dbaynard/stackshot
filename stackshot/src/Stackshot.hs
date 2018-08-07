@@ -13,7 +13,6 @@ import qualified "bytestring"    Data.ByteString.Lazy.Char8 as B8L
 import           "hackage-db"    Distribution.Hackage.DB
 import           "Cabal"         Distribution.Package (PackageName)
 import           "Cabal"         Distribution.Version (Version)
-import           "this"          Stackshot.Parser
 import           "filepath"      System.FilePath
 import           "typed-process" System.Process.Typed
 

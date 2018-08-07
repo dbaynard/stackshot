@@ -2,7 +2,10 @@
     PackageImports
   , DeriveAnyClass
   , DeriveDataTypeable
+  , DeriveFoldable
+  , DeriveFunctor
   , DeriveGeneric
+  , DeriveTraversable
   , DerivingStrategies
   , FlexibleContexts
   , GeneralizedNewtypeDeriving
@@ -10,9 +13,9 @@
   , OverloadedLists
   , OverloadedStrings
   , RankNTypes
+  , StandaloneDeriving
   , TypeApplications
   , TypeOperators
-  , StandaloneDeriving
   #-}
 
 -- |
@@ -33,6 +36,11 @@ module Stackshot.Internal
     StackMap(..)
   , Snapshot(..)
 
+  -- $pkg-config
+  , PkgConfig(..)
+  , _Cabal
+  , _Hpack
+
   -- * Error handling
   -- $errors
   , Error(..)
@@ -44,9 +52,17 @@ module Stackshot.Internal
   , buildMap
   , buildMapMaybe
   , (<??>)
+  , onJust
+
+  -- * Json-autotype
+  -- $json-autotype
+  , _AltLeft
+  , _AltRight
   ) where
 
+import           "base"             Control.Applicative
 import           "lens"             Control.Lens hiding (noneOf)
+import           "json-autotype"    Data.Aeson.AutoType.Alternative
 import           "base"             Data.Bifunctor
 import           "base"             Data.Data
 import           "base"             Data.Foldable
@@ -77,6 +93,32 @@ data Snapshot
   deriving anyclass (Lift)
 
 --------------------------------------------------
+-- $pkg-config
+--
+--
+
+-- | How is the package configured? For example, with package
+-- 'acme-everything':
+data PkgConfig a
+  = Cabal a -- ^ acme-everything.cabal
+  | Hpack a -- ^ package.yaml
+  deriving stock (Show, Eq, Ord, Generic, Data, Functor, Foldable, Traversable)
+
+_Cabal :: PkgConfig a `Prism'` a
+_Cabal = prism' Cabal _cabal
+  where
+    _cabal (Cabal a) = pure a
+    _cabal _ = empty
+{-# INLINE _Cabal #-}
+
+_Hpack :: PkgConfig a `Prism'` a
+_Hpack = prism' Hpack _hpack
+  where
+    _hpack (Hpack a) = pure a
+    _hpack _ = empty
+{-# INLINE _Hpack #-}
+
+--------------------------------------------------
 -- $errors
 --
 -- Synchronous IO errors (such as failing to read a file) should be caught
@@ -91,6 +133,9 @@ data Snapshot
 data Error
   = ReadError
   | ParserError Text
+  | GithubError Text
+  | NetworkError Text
+  | UserError Text
   deriving stock (Show, Eq, Typeable)
   deriving anyclass (Exception)
 
@@ -133,3 +178,31 @@ buildMap' f = foldl' (\m (k, v) -> m & at k `f` v) mempty
 (<??>) :: Parsing m => String -> m a -> m a
 (<??>) = flip (<?>)
 infixr 0 <??>
+
+-- | This is like `maybe`, but the last parameter is the continuation for Just
+onJust :: Maybe a -> b -> (a -> b) -> b
+onJust ma b = maybe b `flip` ma
+{-# INLINE onJust #-}
+infix 1 `onJust`
+
+--------------------------------------------------
+-- $json-autotype
+--
+-- Some helpers for interacting with automated json data structures
+
+_AltLeft :: (a :|: b)  `Prism'` a
+_AltLeft = prism' AltLeft _altLeft
+  where
+    _altLeft (AltLeft a) = pure a
+    _altLeft _           = empty
+{-# INLINE _AltLeft #-}
+
+_AltRight :: (a :|: b)  `Prism'` b
+_AltRight = prism' AltRight _altRight
+  where
+    _altRight (AltRight b) = pure b
+    _altRight _            = empty
+{-# INLINE _AltRight #-}
+
+
+
