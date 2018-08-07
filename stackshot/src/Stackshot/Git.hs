@@ -41,7 +41,8 @@ data RepoPackage = RepoPackage
   { rSource   :: RepoSource
   , rOwner    :: Name Owner
   , rRepo     :: Name Repo
-  , rFilepath :: Text -- ^ Cabal filepath
+  , rCabal    :: Text -- ^ Cabal filepath
+  , rHpack    :: Text -- ^ package.yaml filepath
   , rCommit   :: Maybe Text
   }
   deriving stock (Show, Eq, Generic)
@@ -58,7 +59,8 @@ exampleGithubRepo = RepoPackage
   { rSource   = GitHub
   , rOwner    = "dbaynard"
   , rRepo     = "stackshot"
-  , rFilepath = "stackshot/stackshot.cabal"
+  , rCabal    = "stackshot/stackshot.cabal"
+  , rHpack    = "stackshot/package.yaml"
   , rCommit   = Just "develop"
   }
 
@@ -72,7 +74,7 @@ githubPackage rp = do
 repoCabal :: RepoPackage -> IO Content
 repoCabal RepoPackage{rSource = GitHub, ..} =
   fromEitherIO $ first errorFromGithubError <$>
-    GC.contentsFor rOwner rRepo rFilepath rCommit
+    GC.contentsFor rOwner rRepo rCabal rCommit
 
 decodeCabal :: Text -> Either Error GenericPackageDescription
 decodeCabal = parsing . parseGenericPackageDescription . T.unpack

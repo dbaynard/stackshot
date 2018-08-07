@@ -63,6 +63,7 @@ library:
   - filepath
   - github
   - hackage-db
+  - hpack
   - http-api-data
   - http-client-tls
   - json-autotype

@@ -61,8 +61,9 @@ asRepo PackagesElt{..} = do
     sub <- maybe [Nothing] (fmap Just) packagesEltSubdirs
     pure $ do
       (rOwner, rRepo) <- eep
-      let defRFilepath = T.pack $ T.unpack (untagName rRepo) <.> "cabal"
-          rFilepath = onJust sub defRFilepath $ \s -> T.pack $ T.unpack s </> T.unpack s <.> "cabal"
+      let defRCabal = T.pack $ T.unpack (untagName rRepo) <.> "cabal"
+          rCabal = onJust sub defRCabal $ \s -> T.pack $ T.unpack s </> T.unpack s <.> "cabal"
+          rHpack = onJust sub "package.yaml" $ \s -> T.pack $ T.unpack s </> "package.yaml"
       pure RepoPackage{..}
   where
     rSource      = GitHub
