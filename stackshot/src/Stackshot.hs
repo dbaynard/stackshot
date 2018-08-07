@@ -11,7 +11,7 @@ import           "errors"        Control.Error
 import           "lens"          Control.Lens
 import           "base"          Control.Monad
 import qualified "bytestring"    Data.ByteString.Lazy.Char8 as B8L
-import qualified "containers"    Data.Map.Strict as Map (union)
+import qualified "containers"    Data.Map.Strict as Map (toList, union)
 import           "hackage-db"    Distribution.Hackage.DB
 import           "Cabal"         Distribution.Package (PackageName)
 import           "Cabal"         Distribution.Version (Version)
@@ -27,11 +27,20 @@ import           "unliftio"      UnliftIO.Exception
 -- * Comparing snapshot with hackage
 --------------------------------------------------
 
-updated :: HackageDB -> StackMap -> StackMap
-updated hack (StackMap snap) = StackMap $ imap f snap
+upToDate :: HackageDB -> StackMap -> StackMap
+upToDate hack (StackMap snap) = StackMap $ imap f snap
   where
     f :: PkgName -> PkgVersion -> PkgVersion
     f (PkgName n) v = fromMaybe v $ do
+      l <- PkgVersion <$> latest n hack
+      guard $ l > v
+      pure l
+
+updated :: HackageDB -> StackMap -> StackMap
+updated hack (StackMap snap) = StackMap . buildMapMaybe . Map.toList $ imap f snap
+  where
+    f :: PkgName -> PkgVersion -> Maybe PkgVersion
+    f (PkgName n) v = do
       l <- PkgVersion <$> latest n hack
       guard $ l > v
       pure l

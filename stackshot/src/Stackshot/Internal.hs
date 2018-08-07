@@ -71,6 +71,7 @@ import           "base"             Data.Bifunctor
 import           "base"             Data.Data
 import           "base"             Data.Foldable
 import qualified "containers"       Data.Map.Strict as MapS
+import           "base"             Data.Semigroup
 import           "base"             Data.String (IsString)
 import           "text"             Data.Text (Text)
 import qualified "text"             Data.Text as T
@@ -90,6 +91,7 @@ import           "unliftio"         UnliftIO.Exception
 newtype StackMap = StackMap (MapS.Map PkgName PkgVersion)
   deriving stock (Show, Eq, Generic)
   deriving anyclass (ToJSON, FromJSON)
+  deriving newtype (Semigroup, Monoid)
 
 -- | A stackage snapshot.
 data Snapshot
