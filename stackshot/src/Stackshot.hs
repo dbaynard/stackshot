@@ -23,6 +23,13 @@ import           "typed-process" System.Process.Typed
 import           "unliftio"      UnliftIO (MonadUnliftIO, MonadIO, liftIO)
 import           "unliftio"      UnliftIO.Exception
 
+runUpdated :: MonadUnliftIO m => FilePath -> m StackMap
+runUpdated snapfile = do
+  _ <- updateHackage
+  hack <- hackage
+  sm <- resolveSnapshotFile snapfile
+  pure $ updated hack sm
+
 --------------------------------------------------
 -- * Comparing snapshot with hackage
 --------------------------------------------------
