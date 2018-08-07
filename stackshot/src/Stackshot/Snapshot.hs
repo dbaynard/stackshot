@@ -11,6 +11,7 @@ module Stackshot.Snapshot
   ) where
 
 import           "base"          Control.Monad
+import           "json-autotype" Data.Aeson.AutoType.Alternative (alt)
 import qualified "attoparsec"    Data.Attoparsec.Text as AT
 import           "base"          Data.Bifunctor
 import           "text"          Data.Text (Text)
@@ -30,16 +31,20 @@ import           "unliftio"      UnliftIO.Exception
 
 type SnapshotYaml = A.TopLevel
 
-readSnapshotFile :: MonadUnliftIO m => FilePath -> m (Either Error StackMap)
-readSnapshotFile = undefined
+readSnapshotFile :: MonadUnliftIO m => FilePath -> m StackMap
+readSnapshotFile
+    = liftIO . stackmapFromYaml
+  <=< fromEitherIO . parseSnapshotFile
 
 parseSnapshotFile :: MonadUnliftIO m => FilePath -> m (Either Error SnapshotYaml)
 parseSnapshotFile
     = pure . parserError . first show
   <=< readError . liftIO . decodeFileEither
 
-stackmapFromYaml :: SnapshotYaml -> StackMap
-stackmapFromYaml = undefined
+stackmapFromYaml :: SnapshotYaml -> IO StackMap
+stackmapFromYaml = fmap (StackMap . buildMap . mconcat) . traverse f . topLevelPackages
+  where
+    f = (fmap pure . fromEither . explicit) `alt` ( github `alt` (pure @IO . const []) )
 
 explicit :: Text -> Either Error (PackageName, Version)
 explicit = parserError . AT.parseOnly versionedPkg
