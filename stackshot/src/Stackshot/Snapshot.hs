@@ -15,10 +15,9 @@ import           "base"          Control.Monad
 import           "json-autotype" Data.Aeson.AutoType.Alternative (alt)
 import qualified "attoparsec"    Data.Attoparsec.Text as AT
 import           "base"          Data.Bifunctor
-import           "text"          Data.Text (Text)
 import qualified "text"          Data.Text as T
 import           "yaml"          Data.Yaml hiding ((.=))
-import           "github"        GitHub.Data (Name, Owner, Repo, untagName)
+import           "github"        GitHub.Data (untagName)
 import           "this"          Stackshot.Git
 import           "this"          Stackshot.Internal
 import           "this"          Stackshot.Parser
@@ -52,9 +51,6 @@ stackmapFromYaml = fmap (StackMap . buildMap . mconcat) . traverse f . topLevelP
   where
     f = (fmap pure . fromEither . explicit) `alt` ( github `alt` (pure @IO . const []) )
 
-explicit :: Text -> Either Error (PkgName, PkgVersion)
-explicit = parserError . AT.parseOnly versionedPkg
-
 github :: PackagesElt -> IO [(PkgName, PkgVersion)]
 github =  traverse f . asRepo
   where
@@ -62,9 +58,6 @@ github =  traverse f . asRepo
     f eep = do
       p <- fromEither eep
       githubPackage p
-
-parseGitUrl :: Text -> Either Error (Name Owner, Name Repo)
-parseGitUrl = parserError . AT.parseOnly githubUrl
 
 asRepo :: PackagesElt -> [Either Error RepoPackage]
 asRepo PackagesElt{..} = do

@@ -28,9 +28,11 @@ module Stackshot.Parser
 
   -- ** Versions
   , readVersion
+  , explicit
 
   -- ** Git urls
   , githubUrl
+  , parseGitUrl
 
   -- ** Parser combinators
   , stackageCabalConfig
@@ -117,6 +119,9 @@ sccEntry = do
 readVersion :: Text -> Either Error PkgVersion
 readVersion = parserError . AT.parseOnly version
 
+explicit :: Text -> Either Error (PkgName, PkgVersion)
+explicit = parserError . AT.parseOnly versionedPkg
+
 -- | Parses @package-name-3.4.5@ to (package-name, 3.4.5)
 versionedPkg :: TokenParsing m => m (PkgName, PkgVersion)
 versionedPkg = do
@@ -135,6 +140,9 @@ version = do
 -- $git
 --
 -- Parse git repo urls
+
+parseGitUrl :: Text -> Either Error (Name Owner, Name Repo)
+parseGitUrl = parserError . AT.parseOnly githubUrl
 
 -- | For example,
 --

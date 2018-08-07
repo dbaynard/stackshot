@@ -101,27 +101,33 @@ data Snapshot
 
 -- | Package names with JSON instances
 newtype PkgName = PkgName {unPkgName :: PackageName}
-  deriving stock (Show, Eq, Ord, Generic, Data)
+  deriving stock (Eq, Ord, Generic, Data)
   deriving newtype (IsString)
   deriving anyclass (ToJSONKey, FromJSONKey)
+
+instance Show PkgName where
+  show = unPackageName . unPkgName
 
 instance FromJSON PkgName where
   parseJSON = fmap (PkgName . mkPackageName) . parseJSON
 
 instance ToJSON PkgName where
-  toJSON = toJSON . unPackageName . unPkgName
-  toEncoding = toEncoding . unPackageName . unPkgName
+  toJSON = toJSON . show
+  toEncoding = toEncoding . show
 
 -- | Package names with JSON instances
 newtype PkgVersion = PkgVersion {unPkgVersion :: Version}
-  deriving stock (Show, Eq, Ord, Generic, Data)
+  deriving stock (Eq, Ord, Generic, Data)
+
+instance Show PkgVersion where
+  show = showVersion . unPkgVersion
 
 instance FromJSON PkgVersion where
   parseJSON = fmap (PkgVersion . mkVersion') . parseJSON
 
 instance ToJSON PkgVersion where
-  toJSON = toJSON . showVersion . unPkgVersion
-  toEncoding = toEncoding . showVersion . unPkgVersion
+  toJSON = toJSON . show
+  toEncoding = toEncoding . show
 
 --------------------------------------------------
 -- $pkg-config
