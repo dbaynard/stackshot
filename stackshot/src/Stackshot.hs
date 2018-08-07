@@ -7,14 +7,30 @@ module Stackshot
   ( module Stackshot
   ) where
 
+import           "errors"        Control.Error
 import           "lens"          Control.Lens
+import           "base"          Control.Monad
 import           "base"          Control.Monad.IO.Class
 import qualified "bytestring"    Data.ByteString.Lazy.Char8 as B8L
 import           "hackage-db"    Distribution.Hackage.DB
 import           "Cabal"         Distribution.Package (PackageName)
 import           "Cabal"         Distribution.Version (Version)
+import           "this"          Stackshot.Internal
 import           "filepath"      System.FilePath
 import           "typed-process" System.Process.Typed
+
+--------------------------------------------------
+-- * Comparing snapshot with hackage
+--------------------------------------------------
+
+updated :: HackageDB -> StackMap -> StackMap
+updated hack (StackMap snap) = StackMap $ imap f snap
+  where
+    f :: PkgName -> PkgVersion -> PkgVersion
+    f (PkgName n) v = fromMaybe v $ do
+      l <- PkgVersion <$> latest n hack
+      guard $ l > v
+      pure l
 
 --------------------------------------------------
 -- * Hackage
