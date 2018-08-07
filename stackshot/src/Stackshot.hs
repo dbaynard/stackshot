@@ -18,17 +18,20 @@ import           "Cabal"         Distribution.Version (Version)
 import           "this"          Stackshot.Internal
 import           "this"          Stackshot.Snapshot
 import           "this"          Stackshot.Stackage
+import           "this"          Stackshot.StackMap ()
 import           "filepath"      System.FilePath
 import           "typed-process" System.Process.Typed
 import           "unliftio"      UnliftIO (MonadUnliftIO, MonadIO, liftIO)
 import           "unliftio"      UnliftIO.Exception
+import qualified "yaml" Data.Yaml as Y
 
-runUpdated :: MonadUnliftIO m => FilePath -> m StackMap
-runUpdated snapfile = do
+runUpdated :: MonadUnliftIO m => FilePath -> FilePath -> m ()
+runUpdated infile outfile = do
   _ <- updateHackage
   hack <- hackage
-  sm <- resolveSnapshotFile snapfile
-  pure $ updated hack sm
+  sm <- resolveSnapshotFile infile
+  let upds = updated hack sm
+  liftIO $ Y.encodeFile outfile upds
 
 --------------------------------------------------
 -- * Comparing snapshot with hackage
