@@ -25,7 +25,16 @@ import           "unliftio"      UnliftIO (MonadUnliftIO, MonadIO, liftIO)
 import           "unliftio"      UnliftIO.Exception
 import qualified "yaml" Data.Yaml as Y
 
-runUpdated :: MonadUnliftIO m => FilePath -> FilePath -> m ()
+-- | Convert a snapshot file to a list of packages (in yaml format) which
+-- are updated on hackage vs the snapshot file's packages.
+--
+-- This can be used to update a custom snapshot to a new resolver. First,
+-- update the resolver in the snapshot file. Then run this command.
+runUpdated
+  :: MonadUnliftIO m
+  => FilePath
+  -> FilePath
+  -> m ()
 runUpdated infile outfile = do
   _ <- updateHackage
   hack <- hackage
@@ -37,7 +46,10 @@ runUpdated infile outfile = do
 -- * Comparing snapshot with hackage
 --------------------------------------------------
 
-upToDate :: HackageDB -> StackMap -> StackMap
+upToDate
+  :: HackageDB
+  -> StackMap -- ^ A set of packages, not necessarily up to date
+  -> StackMap -- ^ The most recent versions of those same packages
 upToDate hack (StackMap snap) = StackMap $ imap f snap
   where
     f :: PkgName -> PkgVersion -> PkgVersion
@@ -46,7 +58,10 @@ upToDate hack (StackMap snap) = StackMap $ imap f snap
       guard $ l > v
       pure l
 
-updated :: HackageDB -> StackMap -> StackMap
+updated
+  :: HackageDB
+  -> StackMap -- ^ A set of packages, not necessarily up to date
+  -> StackMap -- ^ The most recent versions of packages in that set which were _not_ up to date
 updated hack (StackMap snap) = StackMap . buildMapMaybe . MapS.toAscList $ imap f snap
   where
     f :: PkgName -> PkgVersion -> Maybe PkgVersion
@@ -55,14 +70,27 @@ updated hack (StackMap snap) = StackMap . buildMapMaybe . MapS.toAscList $ imap 
       guard $ l > v
       pure l
 
+-- | Run 'resolveSnapshot' on the provided snapshot.yaml file.
+-- That file must use a stackage resolver.
 resolveSnapshotFile :: MonadUnliftIO m => FilePath -> m StackMap
 resolveSnapshotFile
     = uncurry resolveSnapshot
   <=< readSnapshotFile'
 
-resolveSnapshot :: MonadIO m => Snapshot -> StackMap -> m StackMap
+-- | Combine custom packages in a 'StackMap' with the packages in
+-- a 'Snapshot', preferring the original version where there is a clash.
+--
+-- For example, supply the set of custom packages in a snapshot file, with
+-- the resolver in the file, and return the total set of packages in the
+-- snapshot.
+resolveSnapshot
+  :: MonadIO m
+  => Snapshot -- ^ A resolver for comparison
+  -> StackMap -- ^ A set of packages
+  -> m StackMap
 resolveSnapshot s (StackMap m0) = do
   StackMap m <- fromEitherIO $ stackageReq s
+  -- Note: MapS.union is left biased
   pure . StackMap $ MapS.union m0 m
 
 --------------------------------------------------
