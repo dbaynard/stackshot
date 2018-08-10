@@ -11,19 +11,38 @@ import           "errors"        Control.Error
 import           "lens"          Control.Lens
 import           "base"          Control.Monad
 import qualified "bytestring"    Data.ByteString.Lazy.Char8 as B8L
-import qualified "containers"    Data.Map.Strict as MapS (toAscList, union)
+import qualified "containers"    Data.Map.Strict as MapS (toAscList)
+import qualified "yaml"          Data.Yaml as Y
 import           "hackage-db"    Distribution.Hackage.DB
 import           "Cabal"         Distribution.Package (PackageName)
 import           "Cabal"         Distribution.Version (Version)
 import           "this"          Stackshot.Internal
 import           "this"          Stackshot.Snapshot
-import           "this"          Stackshot.Stackage
 import           "this"          Stackshot.StackMap ()
+import           "this"          Stackshot.Stackage
 import           "filepath"      System.FilePath
 import           "typed-process" System.Process.Typed
 import           "unliftio"      UnliftIO (MonadUnliftIO, MonadIO, liftIO)
-import           "unliftio"      UnliftIO.Exception
-import qualified "yaml" Data.Yaml as Y
+
+-- | Convert a snapshot file to a list of packages (in yaml format) which
+-- are updated on hackage vs the snapshot file's packages.
+--
+-- This can be used to update a custom snapshot to a new resolver. First,
+-- update the resolver in the snapshot file. Then run this command.
+runUpToDate
+  :: MonadUnliftIO m
+  => FilePath
+  -> FilePath
+  -> m ()
+runUpToDate infile outfile = do
+  _ <- updateHackage
+  hack <- hackage
+  (newSnapshot, oldExplicit) <- readSnapshotFile' infile
+  newImplicit <- stackageReq newSnapshot
+  let currentTotal = oldExplicit `union` newImplicit
+      newTotal = upToDate hack currentTotal
+      newExplicit = newTotal `difference` newImplicit
+  liftIO $ Y.encodeFile outfile newExplicit
 
 -- | Convert a snapshot file to a list of packages (in yaml format) which
 -- are updated on hackage vs the snapshot file's packages.
@@ -88,10 +107,10 @@ resolveSnapshot
   => Snapshot -- ^ A resolver for comparison
   -> StackMap -- ^ A set of packages
   -> m StackMap
-resolveSnapshot s (StackMap m0) = do
-  StackMap m <- fromEitherIO $ stackageReq s
+resolveSnapshot s sm0 = do
+  sm <- stackageReq s
   -- Note: MapS.union is left biased
-  pure . StackMap $ MapS.union m0 m
+  pure $ sm0 `union` sm
 
 --------------------------------------------------
 -- * Hackage

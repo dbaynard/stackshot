@@ -34,6 +34,9 @@ module Stackshot.Internal
   -- * Data types
   -- $datatypes
     StackMap(..)
+  , union
+  , difference
+
   , Snapshot(..)
   , PkgName(..)
   , PkgVersion(..)
@@ -48,6 +51,7 @@ module Stackshot.Internal
   , Error(..)
   , readError
   , parserError
+  , networkError
 
   -- * Helpers
   -- $helpers
@@ -65,6 +69,7 @@ module Stackshot.Internal
 
 import           "base"             Control.Applicative
 import           "lens"             Control.Lens hiding (noneOf)
+import           "base"             Control.Monad
 import           "json-autotype"    Data.Aeson.AutoType.Alternative
 import           "aeson"            Data.Aeson.Types
 import           "base"             Data.Bifunctor
@@ -91,6 +96,21 @@ import           "unliftio"         UnliftIO.Exception
 newtype StackMap = StackMap (MapS.Map PkgName PkgVersion)
   deriving stock (Show, Eq, Generic)
   deriving newtype (Semigroup, Monoid)
+
+union :: StackMap -> StackMap -> StackMap
+union (StackMap a) (StackMap b) = StackMap $ a `MapS.union` b
+
+-- | Take the difference of two 'StackMap's.
+--
+-- Return a 'StackMap' with entries from the first supplied 'StackMap' for
+-- which either
+--
+-- -   the package is absent in the second 'StackMap', or
+-- -   the version is greater in the first 'StackMap'.
+difference :: StackMap -> StackMap -> StackMap
+difference (StackMap a) (StackMap b) = StackMap $ MapS.differenceWith newer a b
+  where
+    newer a' b' = guard (a' > b') *> pure a'
 
 -- | A stackage snapshot.
 data Snapshot
@@ -184,6 +204,10 @@ readError = handleIO . const . throwIO $ ReadError
 -- | Convert a parser 'String' error into an 'Error'.
 parserError :: Bifunctor p => p String a -> p Error a
 parserError = first (ParserError . T.pack)
+
+-- | Convert a network into an 'Error'.
+networkError :: (Show e, Bifunctor p) => p e a -> p Error a
+networkError = first (NetworkError . T.pack . show)
 
 --------------------------------------------------
 -- $helpers

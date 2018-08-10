@@ -54,6 +54,8 @@ import           "this"             Stackshot.QQ
 import           "parsers"          Text.Parser.Char
 import           "parsers"          Text.Parser.Combinators
 import           "parsers"          Text.Parser.Token
+import           "unliftio"         UnliftIO (MonadIO)
+import           "unliftio"         UnliftIO.Exception
 
 --------------------------------------------------
 -- $api
@@ -120,8 +122,8 @@ stackageBaseURL = BaseUrl
 
 -- | Request the @cabal.config@ file corresponding to the supplied
 -- snapshot.
-stackageReq :: Snapshot -> IO (Either ServantError StackMap)
-stackageReq sShot = do
+stackageReq :: MonadIO m => Snapshot -> m StackMap
+stackageReq sShot = fromEitherIO $ do
   man <- newTlsManager
   let clientEnv = mkClientEnv man stackageBaseURL
-  runClientM (getStackageCabalConfig sShot) clientEnv
+  networkError <$> runClientM (getStackageCabalConfig sShot) clientEnv
