@@ -13,7 +13,6 @@ import           Data.Aeson(Object, Value(..), FromJSON(..), ToJSON(..),
                             pairs,
                             (.:), (.:?), (.=), object)
 import           Data.Aeson.Types (Parser)
-import           Data.Monoid
 import           Data.Text (Text)
 import qualified GHC.Generics
 
