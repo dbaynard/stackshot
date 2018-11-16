@@ -76,13 +76,13 @@ import           "base"             Data.Bifunctor
 import           "base"             Data.Data
 import           "base"             Data.Foldable
 import qualified "containers"       Data.Map.Strict as MapS
-import           "base"             Data.Semigroup
 import           "base"             Data.String (IsString)
 import           "text"             Data.Text (Text)
 import qualified "text"             Data.Text as T
 import           "time"             Data.Time
 import           "Cabal"            Distribution.Package (PackageName, mkPackageName, unPackageName)
-import           "Cabal"            Distribution.Version (Version, mkVersion', showVersion)
+import           "Cabal"            Distribution.Pretty (prettyShow)
+import           "Cabal"            Distribution.Version (Version, mkVersion')
 import           "base"             GHC.Generics
 import           "template-haskell" Language.Haskell.TH.Syntax hiding (PkgName)
 import           "parsers"          Text.Parser.Combinators
@@ -140,7 +140,7 @@ newtype PkgVersion = PkgVersion {unPkgVersion :: Version}
   deriving stock (Eq, Ord, Generic, Data)
 
 instance Show PkgVersion where
-  show = showVersion . unPkgVersion
+  show = prettyShow . unPkgVersion
 
 instance FromJSON PkgVersion where
   parseJSON = fmap (PkgVersion . mkVersion') . parseJSON

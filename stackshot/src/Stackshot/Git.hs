@@ -29,7 +29,7 @@ import           "text"              Data.Text.Encoding
 import qualified "yaml"              Data.Yaml as Y
 import           "Cabal"             Distribution.Package (pkgName, pkgVersion, mkPackageName)
 import           "Cabal"             Distribution.PackageDescription
-import           "Cabal"             Distribution.PackageDescription.Parse
+import           "Cabal"             Distribution.PackageDescription.Parsec
 import           "base"              GHC.Generics (Generic)
 import qualified "github"            GitHub.Data as GH (Error(..))
 import           "github"            GitHub.Data hiding (Error(..))
@@ -103,7 +103,7 @@ decodeHpack contents = do
   pure (name, ver)
 
 decodeCabal :: Text -> Either Error GenericPackageDescription
-decodeCabal = parsing . parseGenericPackageDescription . T.unpack
+decodeCabal = parsing . parseGenericPackageDescription . encodeUtf8
 
 decodeGHContentFile :: Content -> Either Error Text
 decodeGHContentFile (ContentFile (ContentFileData{contentFileEncoding = "base64", ..})) =
@@ -116,6 +116,8 @@ decodeGHContentFile (ContentDirectory _) =
   Left ReadError
 
 parsing :: ParseResult a -> Either Error a
-parsing (ParseOk [] a) = Right a
-parsing (ParseOk ws _) = Left . ParserError . T.pack . show $ ws
-parsing (ParseFailed e) = Left . ParserError . T.pack . show $ e
+parsing = f . runParseResult
+  where
+    f ([], Right a) = Right a
+    f (_, Left (_, e)) = Left . ParserError . T.pack . show $ e
+    f (ws, _) = Left . ParserError . T.pack . show $ ws
