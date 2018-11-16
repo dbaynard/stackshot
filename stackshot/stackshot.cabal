@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5af63db6cc5e70d8c99d995abf31bdd8400a3bcd6848ce5b8bb32efde671efc1
+-- hash: dc9232a1d699464623646905b1a18dbd0afd2fb39ef986bc19e45deaecbce109
 
 name:           stackshot
 version:        0.1.0.0
@@ -91,6 +91,8 @@ executable stackshot
   ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Wnoncanonical-monad-instances -Wnoncanonical-monadfail-instances -ddump-minimal-imports -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , optparse-generic
+    , stackshot
   if flag(dev)
     ghc-options: -O0
   else

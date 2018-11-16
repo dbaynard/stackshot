@@ -90,3 +90,6 @@ executables:
     source-dirs:
     - app
     main: Main.hs
+    dependencies:
+    - stackshot
+    - optparse-generic
