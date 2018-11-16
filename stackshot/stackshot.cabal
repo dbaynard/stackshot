@@ -1,8 +1,10 @@
--- This file has been generated from package.yaml by hpack version 0.27.0.
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a9e6ac94b67a5f89f0ad6f74ea43b7140f50dc287453daf515e27a38cae19993
+-- hash: 5af63db6cc5e70d8c99d995abf31bdd8400a3bcd6848ce5b8bb32efde671efc1
 
 name:           stackshot
 version:        0.1.0.0
@@ -16,11 +18,9 @@ maintainer:     davidbaynard@gmail.com
 copyright:      2018 David Baynard
 license:        BSD3
 build-type:     Simple
-cabal-version:  >= 1.10
-
 extra-source-files:
-    ../LICENSE
     ../README.md
+    ../LICENSE
 
 source-repository head
   type: git
