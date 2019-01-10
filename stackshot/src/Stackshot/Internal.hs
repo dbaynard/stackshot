@@ -70,7 +70,7 @@ module Stackshot.Internal
 import           "base"             Control.Applicative
 import           "lens"             Control.Lens hiding (noneOf)
 import           "base"             Control.Monad
-import           "json-autotype"    Data.Aeson.AutoType.Alternative
+import           "json-alt"         Data.Aeson.AutoType.Alternative
 import           "aeson"            Data.Aeson.Types
 import           "base"             Data.Bifunctor
 import           "base"             Data.Data

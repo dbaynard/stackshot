@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: dc9232a1d699464623646905b1a18dbd0afd2fb39ef986bc19e45deaecbce109
+-- hash: 49570b770a63dc538d90af612ca67907b090f26be66ce55059afa67beead5e99
 
 name:           stackshot
 version:        0.1.0.0
@@ -63,6 +63,7 @@ library
     , hackage-db
     , http-api-data
     , http-client-tls
+    , json-alt
     , json-autotype
     , lens
     , lens-aeson

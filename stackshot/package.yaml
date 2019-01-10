@@ -67,6 +67,7 @@ library:
   - hackage-db
   - http-api-data
   - http-client-tls
+  - json-alt
   - json-autotype
   - lens
   - lens-aeson
