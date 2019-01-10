@@ -10,22 +10,22 @@ module Stackshot.Snapshot
   ( module Stackshot.Snapshot
   ) where
 
-import           "base"          Control.Arrow ((&&&))
-import           "base"          Control.Monad
-import           "json-autotype" Data.Aeson.AutoType.Alternative (alt)
-import qualified "attoparsec"    Data.Attoparsec.Text as AT
-import           "base"          Data.Bifunctor
-import qualified "text"          Data.Text as T
-import           "yaml"          Data.Yaml hiding ((.=))
-import           "github"        GitHub.Data (untagName)
-import           "this"          Stackshot.Git
-import           "this"          Stackshot.Internal
-import           "this"          Stackshot.Parser
-import           "this"          Stackshot.Snapshot.Auto as A
-import           "this"          Stackshot.Stackage
-import           "filepath"      System.FilePath
-import           "unliftio"      UnliftIO (MonadUnliftIO, liftIO)
-import           "unliftio"      UnliftIO.Exception
+import           "base"       Control.Arrow ((&&&))
+import           "base"       Control.Monad
+import           "json-alt"   Data.Aeson.AutoType.Alternative (alt)
+import qualified "attoparsec" Data.Attoparsec.Text as AT
+import           "base"       Data.Bifunctor
+import qualified "text"       Data.Text as T
+import           "yaml"       Data.Yaml hiding ((.=))
+import           "github"     GitHub.Data (untagName)
+import           "this"       Stackshot.Git
+import           "this"       Stackshot.Internal
+import           "this"       Stackshot.Parser
+import           "this"       Stackshot.Snapshot.Auto as A
+import           "this"       Stackshot.Stackage
+import           "filepath"   System.FilePath
+import           "unliftio"   UnliftIO (MonadUnliftIO, liftIO)
+import           "unliftio"   UnliftIO.Exception
 
 --------------------------------------------------
 -- * Snapshot files
